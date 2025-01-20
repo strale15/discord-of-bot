@@ -1,6 +1,14 @@
 import discord
 from discord.ext import commands
 from discord import app_commands
+from dotenv import load_dotenv
+import os
+
+# Load environment variables from .env file
+load_dotenv()
+
+BOT_TOKEN = os.environ.get("TOKEN")
+GUILD_ID = os.environ.get("GUILD_ID")
 
 class MyClient(commands.Bot):
     async def on_ready(self):
@@ -19,7 +27,7 @@ class MyClient(commands.Bot):
         #await message.channel.send("message")
         
 #Bot setup
-SERVER_ID = discord.Object(id="1329392343517892619")
+SERVER_ID = discord.Object(id=GUILD_ID)
 
 intents = discord.Intents.all()
 intents.message_content = True
@@ -125,5 +133,5 @@ async def info_error(interaction: discord.Interaction, error):
 
 
 
-
-client.run('MTMyOTM5ODQ4NDQ4NjMyODMyMA.Gajlkk.XOm4EG5LurEK3SzOXtZ9SktBacjCddOG8HYWTc')
+#Run client
+client.run(BOT_TOKEN)
