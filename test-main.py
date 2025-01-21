@@ -71,14 +71,14 @@ async def executeCommand(interaction: discord.Interaction, model_name: str):
     try:
         createdCategory = await interaction.guild.create_category(model_name)
         createdChannel = await interaction.guild.create_text_channel(model_name + " - ", category=createdCategory)
-        await interaction.response.send_message(f"Successfully created {createdChannel.name} vc!")
+        await interaction.response.send_message(f"Successfully created {createdChannel.name} model space!")
     except Exception as e:
         await interaction.response.send_message(f"Channel creation failed {e}")
         
 #Test perm command
 @client.tree.command(name="test-perm", description="Tests permission", guild=settings.GUILD_ID)
 @app_commands.checks.has_permissions(manage_channels=True)
-#@app_commands.default_permissions(manage_channels=True)
+@app_commands.default_permissions(manage_channels=True)
 async def executeCommandError(interaction: discord.Interaction):
     await interaction.response.send_message("You have permission!")
 
