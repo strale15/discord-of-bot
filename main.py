@@ -183,7 +183,7 @@ async def executeCommand(interaction: discord.Interaction):
                 if len(usernames) == 0:
                     newChannelName = "❌" + getBaseChannelName(channel.name)[1:] + " -"
                 else:
-                    newChannelName = getBaseChannelName(channel.name)[1:] + " - " + ' + '.join(usernames)
+                    newChannelName = getBaseChannelName(channel.name) + " - " + '+'.join(usernames)
                     
                 await channel.edit(name=newChannelName)
                 await interaction.response.send_message(f"_You are now clocked out._")
