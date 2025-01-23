@@ -1,4 +1,5 @@
 import settings
+from util import *
 import discord
 from discord.ext import commands
 from discord import app_commands
@@ -26,26 +27,14 @@ client = MyClient(command_prefix="!", intents=intents)
 #Global error handling        
 @client.tree.error
 async def on_error(interaction: discord.Interaction, error: discord.app_commands.AppCommandError) -> None:
-    log.error(f"Error type: {type(error)}")
-    await interaction.response.send_message(f'Error global: ({error})')
+    log.error(f"Error : {error}")
+    #await interaction.response.send_message(f'Error global: ({error})')
     
 @client.tree.command(name="test", description="Performs a sanity check.", guild=settings.GUILD_ID)
 async def testSanity(interaction: discord.Interaction):
     await interaction.response.send_message("*Hi!* Everything seems to work properly 😊")
         
 #Setup command
-def getCategoryByName(guild: discord.Guild, name: str) -> discord.CategoryChannel:
-    for category in guild.categories:
-        if category.name.lower() == name.lower():
-            return category
-    return None
-
-def getRoleByName(guild: discord.Guild, name: str) -> discord.Role:
-    for role in guild.roles:
-        if role.name.lower() == name.lower():
-            return role
-    return None
-
 @app_commands.checks.has_permissions(manage_channels=True)
 @app_commands.default_permissions(manage_channels=True)
 @client.tree.command(name="setup", description="Creates voice channel in 'clock in' based on the model category", guild=settings.GUILD_ID)
@@ -95,7 +84,7 @@ async def executeCommand(interaction: discord.Interaction, model_name: str):
     overwrites = {
                     interaction.guild.default_role: discord.PermissionOverwrite(read_messages=False, connect=False),
                     modelRole: discord.PermissionOverwrite(read_messages=True, send_messages=True, connect=True, speak=True)
-                  }
+                }
     
     try:
         createdCategory = await interaction.guild.create_category(model_name, overwrites=overwrites)
@@ -155,6 +144,52 @@ async def executeCommand(interaction: discord.Interaction):
         await interaction.response.send_message(f"Successfully cleaned all VCs!")
     except:
         await interaction.response.send_message(f"Failed to delete channel")
+        
+#Clock in command
+@client.tree.command(name="ci", description="Clocks you in. Use in model text channel to clock in for that model.", guild=settings.GUILD_ID)
+async def executeCommand(interaction: discord.Interaction):
+    modelName = interaction.channel.category.name.lower()
+    clockInCategory = getCategoryByName(interaction.guild, 'clock in')
+    username = interaction.user.name
+    
+    for channel in clockInCategory.channels:
+        if isinstance(channel, discord.VoiceChannel) and channel.name.lower().__contains__(modelName):
+            if channel.name.__contains__(username):
+                await interaction.response.send_message(f"_You are already clocked in._")
+                return
+            
+            if channel.name[-1] != '-':
+                await channel.edit(name=channel.name + "+" + username)
+            else:
+                await channel.edit(name="✅" + channel.name[1:] + " " + username)
+
+    
+    await interaction.response.send_message(f"You are now clocked in! Good luck solder 🫡")
+    
+#Clock out command
+@client.tree.command(name="co", description="Clocks you out. Use in model text channel to clock out for that model.", guild=settings.GUILD_ID)
+async def executeCommand(interaction: discord.Interaction):
+    modelName = interaction.channel.category.name.lower()
+    clockInCategory = getCategoryByName(interaction.guild, 'clock in')
+    username = interaction.user.name
+    
+    for channel in clockInCategory.channels:
+        if isinstance(channel, discord.VoiceChannel) and channel.name.lower().__contains__(modelName):
+            if channel.name.__contains__(username):
+                #remove username from channel.name string
+                usernames = getClockedInUsernames(channel.name)
+                usernames.remove(username)
+                
+                if len(usernames) == 0:
+                    newChannelName = "❌" + getBaseChannelName(channel.name)[1:] + " -"
+                else:
+                    newChannelName = getBaseChannelName(channel.name)[1:] + " - " + ' + '.join(usernames)
+                    
+                await channel.edit(name=newChannelName)
+                await interaction.response.send_message(f"_You are now clocked out._")
+                return
+            
+    await interaction.response.send_message(f"_You are not clocked in on any model._")
         
 #RUN BOT     
 if __name__ == "__main__":
