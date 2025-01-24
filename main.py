@@ -164,7 +164,7 @@ async def executeCommand(interaction: discord.Interaction):
                 await channel.edit(name="✅" + channel.name[1:] + " " + username)
 
     
-    await interaction.response.send_message(f"You are now clocked in! Good luck solder 🫡")
+    await interaction.response.send_message(f"You are now clocked in! Good luck soldier 🫡")
     
 #Clock out command
 @client.tree.command(name="co", description="Clocks you out. Use in model text channel to clock out for that model.", guild=settings.GUILD_ID)
