@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 import discord
 
 load_dotenv()
+#MTMyOTM5ODQ4NDQ4NjMyODMyMA.Gwf-my.CpyZAjMb2Pjy2nh4MfnYCBix0glfu3Crz5jByA
 
 DISCORD_API_SECRET = os.getenv("DISCORD_API_TOKEN")
 
