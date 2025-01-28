@@ -1,5 +1,3 @@
-from typing import Required
-from urllib import request
 import settings
 from util import *
 import discord
