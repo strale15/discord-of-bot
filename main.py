@@ -1,4 +1,5 @@
 from typing import Required
+from urllib import request
 import settings
 from util import *
 import discord
@@ -237,21 +238,25 @@ async def executeCommand(interaction: discord.Interaction):
     
 ### MMA ###
 class MmaView(discord.ui.View):
-    def __init__(self, mm: discord.Message):
+    def __init__(self, mm: discord.Message, requestChannel: discord.TextChannel, user: discord.User, modelName: str):
         super().__init__(timeout=None)
         
         self.mm = mm
+        self.requestChannel = requestChannel
+        self.user = user
+        self.modelName = modelName
 
     @discord.ui.button(label="Approve", style=discord.ButtonStyle.green)
     async def approve(self, interaction: discord.Interaction, Button: discord.ui.Button):
         await self.mm.delete()
-        await interaction.response.send_message(f"_Approved_", ephemeral=True)
+        await self.requestChannel.send(f"{self.user.mention} your mm for **{self.modelName}** was approved by **{interaction.user.name}**")
+        await interaction.response.send_message(f"_Approved the mm_", ephemeral=True)
         
-
     @discord.ui.button(label="Reject", style=discord.ButtonStyle.red)
     async def reject(self, interaction: discord.Interaction, Button: discord.ui.Button):
         await self.mm.delete()
-        await interaction.response.send_message(f"_Rejected_", ephemeral=True)
+        await self.requestChannel.send(f"{self.user.mention} your mm for **{self.modelName}** was rejected by **{interaction.user.name}**")
+        await interaction.response.send_message(f"_Rejected the mm_", ephemeral=True)
 
 class MassMessageModal(discord.ui.Modal, title="Submit MM"):
     def __init__(self):
@@ -289,7 +294,7 @@ class MassMessageModal(discord.ui.Modal, title="Submit MM"):
                     embed=embed_message,
                     file=discord.File(file, filename=thumbnail_filename)
                 )
-                await message.edit(view=MmaView(message))
+                await message.edit(view=MmaView(message, interaction.channel, interaction.user, interaction.channel.category.name))
 
             await interaction.response.send_message(f"{interaction.user.mention} Thank you for submitting your mm, it will be reviewed!", ephemeral=True)
         except Exception as e:
