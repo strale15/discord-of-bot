@@ -1,3 +1,4 @@
+from typing import Required
 import settings
 from util import *
 import discord
@@ -50,6 +51,11 @@ async def setupClockInChannel(interaction: discord.Interaction):
         await interaction.response.send_message(f"_'Clock in' category' does not exist, please create it._", ephemeral=True)
         return
     
+    for voice in clockInCategory.voice_channels:
+        if voice.name.lower().__contains__(modelName.lower()):
+            await interaction.response.send_message(f"_Model voice channel is already setup._", ephemeral=True)
+            return
+    
     modelRole = getRoleByName(interaction.guild, modelName)
     if modelRole is None:
         await interaction.response.send_message(f"_{modelName} role does not exist, please create it._", ephemeral=True)
@@ -78,8 +84,7 @@ async def executeCommand(interaction: discord.Interaction, model_name: str):
     
     modelRole = getRoleByName(interaction.guild, model_name)
     if modelRole is None:
-        await interaction.response.send_message(f"_{model_name} role does not exist, please create it._", ephemeral=True)
-        return
+        modelRole = await interaction.guild.create_role(name=model_name, color=discord.Colour.red())
     
     overwrites = {
                     interaction.guild.default_role: discord.PermissionOverwrite(read_messages=False, connect=False),
@@ -88,10 +93,42 @@ async def executeCommand(interaction: discord.Interaction, model_name: str):
     
     try:
         createdCategory = await interaction.guild.create_category(model_name, overwrites=overwrites)
-        createdChannel = await interaction.guild.create_text_channel(model_name + " - ", category=createdCategory)
-        await interaction.response.send_message(f"_Successfully created {createdChannel.name} model space!_", ephemeral=True)
+        await interaction.guild.create_text_channel("chatter", category=createdCategory)
+        await interaction.guild.create_text_channel("staff", category=createdCategory)
+        await interaction.guild.create_text_channel("mma-request", category=createdCategory)
+        await interaction.response.send_message(f"_Successfully created {model_name} model space!_", ephemeral=True)
     except Exception as e:
         await interaction.response.send_message(f"_Channel creation failed {e}_", ephemeral=True)
+        
+#Clean model info
+@app_commands.checks.has_permissions(manage_channels=True)
+@app_commands.default_permissions(manage_channels=True)
+@client.tree.command(name="delete-model-info", description="Deletes all model info (categories, channels, role)", guild=settings.GUILD_ID)
+async def executeCommand(interaction: discord.Interaction, model_name: str):
+    model_name = model_name.lower()
+    
+    try:
+        #Remove model category
+        allCategories = interaction.guild.categories
+        for category in allCategories:
+            if category.name.lower().__contains__(model_name):
+                for channel in category.channels:
+                        await channel.delete()
+                await category.delete()
+                
+        #Remove model vc
+        allChannels = interaction.guild.channels
+        for channel in allChannels:
+            if channel.name.lower().__contains__(model_name):
+                await channel.delete()
+                
+        modelRole = getRoleByName(interaction.guild, model_name)
+        if modelRole is not None:
+            await modelRole.delete()
+            
+        await interaction.response.send_message(f"Successfully deleted all {model_name} info!", ephemeral=True)
+    except Exception as e:
+        await interaction.response.send_message(f"Failed to delete model info: {e}", ephemeral=True)
         
 #Clean all categories command - helper
 @app_commands.checks.has_permissions(manage_channels=True)
@@ -114,7 +151,7 @@ async def executeCommand(interaction: discord.Interaction):
 async def executeCommand(interaction: discord.Interaction, role_name: str):
     modelRole = getRoleByName(interaction.guild, role_name)
     if modelRole is None:
-        modelRole = await interaction.guild.create_role(name=role_name, color=discord.Colour.red())
+        modelRole = await interaction.guild.create_role(name=role_name, color=discord.Colour.random())
         
     await interaction.user.add_roles(modelRole)
     await interaction.response.send_message(f"You received the role {role_name}", ephemeral=True)
@@ -148,6 +185,10 @@ async def executeCommand(interaction: discord.Interaction):
 #Clock in command
 @client.tree.command(name="ci", description="Clocks you in. Use in model text channel to clock in for that model.", guild=settings.GUILD_ID)
 async def executeCommand(interaction: discord.Interaction):
+    if interaction.channel.category is None:
+        await interaction.response.send_message(f"_Wrong channel, use one of the model text channels._")
+        return
+    
     modelName = interaction.channel.category.name.lower()
     clockInCategory = getCategoryByName(interaction.guild, 'clock in')
     username = interaction.user.name
@@ -162,9 +203,12 @@ async def executeCommand(interaction: discord.Interaction):
                 await channel.edit(name=channel.name + "+" + username)
             else:
                 await channel.edit(name="✅" + channel.name[1:] + " " + username)
-
+                
+            await interaction.response.send_message(f"You are now clocked in! Good luck soldier 🫡", ephemeral=True)
+            return
+        
+    await interaction.response.send_message(f"_Model is missing the voice channel, please create one using /setup._", ephemeral=True)
     
-    await interaction.response.send_message(f"You are now clocked in! Good luck soldier 🫡", ephemeral=True)
     
 #Clock out command
 @client.tree.command(name="co", description="Clocks you out. Use in model text channel to clock out for that model.", guild=settings.GUILD_ID)
@@ -192,19 +236,72 @@ async def executeCommand(interaction: discord.Interaction):
     await interaction.response.send_message(f"_You are not clocked in on any model._", ephemeral=True)
     
 ### MMA ###
-class ReportModal(discord.ui.Modal, title="Report User"):
-    user_name = discord.ui.TextInput(label="User's Discord Name", placeholder="eg. JohnDoe#eeee", required=True, max_length=100, style=discord.TextStyle.short)
-    user_id = discord.ui.TextInput(label="User's Discord ID", placeholder="To grab a user's ID, make sure Developer Mode is on.", required=True, max_length=160, style=discord.TextStyle. short)
-    description = discord.ui.TextInput(label="what did they do?", placeholder="eg. Broke rule #7", required=True, min_length=200, max_length=2000, style=discord.TextStyle.paragraph)
+class MmaView(discord.ui.View):
+    def __init__(self, mm: discord.Message):
+        super().__init__(timeout=None)
+        
+        self.mm = mm
+
+    @discord.ui.button(label="Approve", style=discord.ButtonStyle.green)
+    async def approve(self, interaction: discord.Interaction, Button: discord.ui.Button):
+        await self.mm.delete()
+        await interaction.response.send_message(f"_Approved_", ephemeral=True)
+        
+
+    @discord.ui.button(label="Reject", style=discord.ButtonStyle.red)
+    async def reject(self, interaction: discord.Interaction, Button: discord.ui.Button):
+        await self.mm.delete()
+        await interaction.response.send_message(f"_Rejected_", ephemeral=True)
+
+class MassMessageModal(discord.ui.Modal, title="Submit MM"):
+    def __init__(self):
+        super().__init__(title="Submit MM")    
+        self.mass_message = discord.ui.TextInput(
+            label="Mass message:",
+            placeholder="Message...",
+            required=True,
+            min_length=1,
+            max_length=1000,
+            style=discord.TextStyle.paragraph,
+        )
+
+        # Add the field to the modal
+        self.add_item(self.mass_message)
+
     
     async def on_submit(self, interaction: discord. Interaction):
-        await interaction.response.send_message(f"{interaction.user.mention} Thank you for submitting your report, the moderation team will see it momentarily!", ephemeral=True)
-        channel = discord.utils.get(interaction.guild.channels, name=interaction.channel.name)
-        await channel.send(f"Submitted by {interaction.user.mention} \n Name: {self.user_name} \n ID: {self.user_id} \n Reported For: {self.description}")
+        try:
+            #Send mm for review
+            channel = discord.utils.get(interaction.guild.channels, id=settings.MMA_APPROVAL_ID)
+            
+            embed_message = discord.Embed(title=interaction.channel.category.name + " - MM", color=discord.Color.blue())
+            embed_message.set_author(name=f"Requested by {interaction.user.display_name} ({interaction.user})", icon_url=interaction.user.avatar)
+            embed_message.add_field(name="Message", value=self.mass_message.value, inline=True)
+            embed_message.set_footer(text="Review decision:")
+            
+            thumbnail_path = "res/envelope.png"
+            thumbnail_filename = "envelope.png"
+            embed_message.set_thumbnail(url=f"attachment://{thumbnail_filename}")
+
+            with open(thumbnail_path, "rb") as file:
+                message = await channel.send(
+                    content=f"{interaction.user.mention} submitted a mass message for review:",
+                    embed=embed_message,
+                    file=discord.File(file, filename=thumbnail_filename)
+                )
+                await message.edit(view=MmaView(message))
+
+            await interaction.response.send_message(f"{interaction.user.mention} Thank you for submitting your mm, it will be reviewed!", ephemeral=True)
+        except Exception as e:
+            await interaction.response.send_message(f"_Error submitting the mm, contact staff {e}_", ephemeral=True)
         
-@client.tree.command(name="report", description="Report a user", guild=settings.GUILD_ID)
+        
+@client.tree.command(name="mma", description="Submit MM for approval", guild=settings.GUILD_ID)
 async def report(interaction: discord.Interaction):
-    await interaction.response.send_modal(ReportModal())
+    if not interaction.channel.name.lower().__contains__("mma-request"):
+        await interaction.response.send_message(f"_Please submit mms in mma request channel._", ephemeral=True)
+        return
+    await interaction.response.send_modal(MassMessageModal())
         
 #RUN BOT     
 if __name__ == "__main__":
