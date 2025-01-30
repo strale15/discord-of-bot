@@ -21,6 +21,7 @@ GUILD_ID = discord.Object(id=int(os.getenv("GUILD_ID")))
 FEEDBACK_CH = int(os.getenv("FEEDBACK_CH", 0))
 GUILD_ID_INT = int(os.getenv("GUILD_ID"))
 MMA_APPROVAL_ID = int(os.getenv("MMA_APPROVAL_ID"))
+CUSTOMS_QUEUE_ID = int(os.getenv("CUSTOMS_QUEUE_ID"))
 
 LOGGING_CONFIG = {
     "version": 1,

@@ -22,4 +22,10 @@ def getClockedInUsernames(channelName: str) -> list:
 
 def getBaseChannelName(channelName: str) -> str:
     return channelName.split('-')[0].strip()
+
+def getMember(interaction: discord.Interaction) -> discord.Member:
+    return interaction.guild.get_member(interaction.user.id)
+
+def getMemberByUser(interaction: discord.Interaction, userId: int) -> discord.Member:
+    return interaction.guild.get_member(userId)
     

@@ -1,3 +1,5 @@
+from multiprocessing.dummy import Value
+from urllib import request
 import settings
 from util import *
 import discord
@@ -95,6 +97,7 @@ async def executeCommand(interaction: discord.Interaction, model_name: str):
         await interaction.guild.create_text_channel("chatter", category=createdCategory)
         await interaction.guild.create_text_channel("staff", category=createdCategory)
         await interaction.guild.create_text_channel("mma-request", category=createdCategory)
+        await interaction.guild.create_text_channel("cs-request", category=createdCategory)
         await interaction.response.send_message(f"_Successfully created {model_name} model space!_", ephemeral=True)
     except Exception as e:
         await interaction.response.send_message(f"_Channel creation failed {e}_", ephemeral=True)
@@ -190,7 +193,7 @@ async def executeCommand(interaction: discord.Interaction):
     
     modelName = interaction.channel.category.name.lower()
     clockInCategory = getCategoryByName(interaction.guild, 'clock in')
-    username = interaction.user.name
+    username = interaction.user.display_name
     
     for channel in clockInCategory.channels:
         if isinstance(channel, discord.VoiceChannel) and channel.name.lower().__contains__(modelName):
@@ -214,7 +217,7 @@ async def executeCommand(interaction: discord.Interaction):
 async def executeCommand(interaction: discord.Interaction):
     modelName = interaction.channel.category.name.lower()
     clockInCategory = getCategoryByName(interaction.guild, 'clock in')
-    username = interaction.user.name
+    username = interaction.user.display_name
     
     for channel in clockInCategory.channels:
         if isinstance(channel, discord.VoiceChannel) and channel.name.lower().__contains__(modelName):
@@ -235,25 +238,82 @@ async def executeCommand(interaction: discord.Interaction):
     await interaction.response.send_message(f"_You are not clocked in on any model._", ephemeral=True)
     
 ### MMA ###
+class MassMessageChangeModal(discord.ui.Modal, title="Comment on MM"):
+    def __init__(self, ctx: discord.Interaction, requestChannel: discord.TextChannel, employee: discord.User, modelName: str, requestMsg: discord.Message, embed: discord.Embed):
+        super().__init__(title="Request change for mm") 
+        self.ctx = ctx
+        self.requestChannel = requestChannel
+        self.employee = employee
+        self.modelName =  modelName
+        self.requestMsg = requestMsg
+        self.embed = embed
+           
+        self.comment = discord.ui.TextInput(
+            label="Comment:",
+            placeholder="You comment...",
+            required=True,
+            min_length=1,
+            max_length=1000,
+            style=discord.TextStyle.paragraph,
+        )
+        
+        self.proposition = discord.ui.TextInput(
+            label="Edited MM:",
+            placeholder="Your edited mm...",
+            required=False,
+            default=embed.fields[0].value,
+            min_length=0,
+            max_length=1000,
+            style=discord.TextStyle.paragraph,
+        )
+
+        # Add the field to the modal
+        self.add_item(self.comment)
+        self.add_item(self.proposition)
+    
+    async def on_submit(self, interaction: discord. Interaction):
+        await self.requestMsg.delete()
+        
+        self.embed.color = discord.Color.yellow()
+        self.embed.remove_footer()
+        self.embed.fields[0].name = "Original mm"
+        self.embed.fields[0].inline = False
+        self.embed.add_field(name="Comment", value=self.comment.value, inline=False)
+        if len(self.proposition.value) > 0 and self.proposition.value != self.embed.fields[0].value:
+            self.embed.add_field(name="Proposed change:", value=self.proposition.value, inline=False)
+        
+        
+        await self.requestChannel.send(f"{self.employee.mention} your mm for **{self.modelName}** request change by **{interaction.user.display_name}**\n_Commented mm:_", embed=self.embed)
+        await interaction.response.send_message(f"_Change requested_", ephemeral=True)
+
 class MmaView(discord.ui.View):
-    def __init__(self, mm: discord.Message, requestChannel: discord.TextChannel, user: discord.User, modelName: str):
+    def __init__(self, mm: discord.Message, requestChannel: discord.TextChannel, employee: discord.User, modelName: str, embed: discord.Embed):
         super().__init__(timeout=None)
         
         self.mm = mm
         self.requestChannel = requestChannel
-        self.user = user
+        self.employee = employee
         self.modelName = modelName
+        self.embed = embed
 
     @discord.ui.button(label="Approve", style=discord.ButtonStyle.green)
     async def approve(self, interaction: discord.Interaction, Button: discord.ui.Button):
         await self.mm.delete()
-        await self.requestChannel.send(f"{self.user.mention} your mm for **{self.modelName}** was approved by **{interaction.user.name}**")
+        self.embed.color = discord.Color.green()
+        self.embed.remove_footer()
+        await self.requestChannel.send(f"{self.employee.mention} your mm for **{self.modelName}** was approved by **{interaction.user.nick}**\n_Approved mm request:_", embed=self.embed)
         await interaction.response.send_message(f"_Approved the mm_", ephemeral=True)
+        
+    @discord.ui.button(label="Request change", style=discord.ButtonStyle.blurple)
+    async def requestChange(self, interaction: discord.Interaction, Button: discord.ui.Button):
+        await interaction.response.send_modal(MassMessageChangeModal(interaction, self.requestChannel, self.employee, self.modelName, self.mm, self.embed))
         
     @discord.ui.button(label="Reject", style=discord.ButtonStyle.red)
     async def reject(self, interaction: discord.Interaction, Button: discord.ui.Button):
         await self.mm.delete()
-        await self.requestChannel.send(f"{self.user.mention} your mm for **{self.modelName}** was rejected by **{interaction.user.name}**")
+        self.embed.color = discord.Color.red()
+        self.embed.remove_footer()
+        await self.requestChannel.send(f"{self.employee.mention} your mm for **{self.modelName}** was rejected by **{interaction.user.display_name}**\n_Rejected mm request:_", embed=self.embed)
         await interaction.response.send_message(f"_Rejected the mm_", ephemeral=True)
 
 class MassMessageModal(discord.ui.Modal, title="Submit MM"):
@@ -292,7 +352,7 @@ class MassMessageModal(discord.ui.Modal, title="Submit MM"):
                     embed=embed_message,
                     file=discord.File(file, filename=thumbnail_filename)
                 )
-                await message.edit(view=MmaView(message, interaction.channel, interaction.user, interaction.channel.category.name))
+                await message.edit(view=MmaView(message, interaction.channel, interaction.user, interaction.channel.category.name, embed_message))
 
             await interaction.response.send_message(f"{interaction.user.mention} Thank you for submitting your mm, it will be reviewed!", ephemeral=True)
         except Exception as e:
@@ -305,6 +365,115 @@ async def report(interaction: discord.Interaction):
         await interaction.response.send_message(f"_Please submit mms in mma request channel._", ephemeral=True)
         return
     await interaction.response.send_modal(MassMessageModal())
+    
+### CUSTOMS ###
+class CsView(discord.ui.View):
+    def __init__(self, mm: discord.Message, requestChannel: discord.TextChannel, user: discord.User, modelName: str, embed: discord.Embed):
+        super().__init__(timeout=None)
+        
+        self.mm = mm
+        self.requestChannel = requestChannel
+        self.user = user
+        self.modelName = modelName
+        self.embed = embed
+
+    @discord.ui.button(label="Approve", style=discord.ButtonStyle.green)
+    async def approve(self, interaction: discord.Interaction, Button: discord.ui.Button):
+        await self.mm.delete()
+        self.embed.color = discord.Color.green()
+        await self.requestChannel.send(f"{self.user.mention} your cs for **{self.modelName}** was approved by **{interaction.user.display_name}**\n_Custom:_", embed=self.embed)
+        await interaction.response.send_message(f"_Approved the cs_", ephemeral=True)
+        
+    @discord.ui.button(label="Reject", style=discord.ButtonStyle.red)
+    async def reject(self, interaction: discord.Interaction, Button: discord.ui.Button):
+        await self.mm.delete()
+        self.embed.color = discord.Color.red()
+        await self.requestChannel.send(f"{self.user.mention} your cs for **{self.modelName}** was rejected by **{interaction.user.display_name}**\n_Custom:_", embed=self.embed)
+        await interaction.response.send_message(f"_Rejected the cs_", ephemeral=True)
+
+class CustomsModal(discord.ui.Modal, title="Submit Custom"):
+    def __init__(self):
+        super().__init__(title="Submit Custom")    
+        self.ofName = discord.ui.TextInput(
+            label="Onlyfans username:",
+            placeholder="some incel username",
+            required=True,
+            min_length=1,
+            max_length=20,
+            style=discord.TextStyle.short,
+        )
+        
+        self.date = discord.ui.TextInput(
+            label="Date:",
+            placeholder="10/01/2025",
+            required=True,
+            min_length=1,
+            max_length=20,
+            style=discord.TextStyle.short,
+        )
+        
+        self.paid = discord.ui.TextInput(
+            label="$ Paid (Lifetime):",
+            placeholder="500",
+            required=True,
+            min_length=1,
+            max_length=20,
+            style=discord.TextStyle.short,
+        )
+        
+        self.details = discord.ui.TextInput(
+            label="Details:",
+            placeholder="details...",
+            required=True,
+            min_length=1,
+            max_length=500,
+            style=discord.TextStyle.paragraph,
+        )
+        
+        # Add the field to the modal
+        self.add_item(self.ofName)
+        self.add_item(self.date)
+        self.add_item(self.paid)
+        self.add_item(self.details)
+
+    
+    async def on_submit(self, interaction: discord. Interaction):
+        try:
+            #Send custom for review
+            channel = discord.utils.get(interaction.guild.channels, id=settings.CUSTOMS_QUEUE_ID)
+            
+            embed_message = discord.Embed(title=interaction.channel.category.name + " - Custom", color=discord.Color.green())
+            embed_message.set_author(name=f"Requested by {interaction.user.display_name} ({interaction.user})", icon_url=interaction.user.avatar)
+            embed_message.add_field(name="OF Name:", value=self.ofName.value, inline=True)
+            embed_message.add_field(name="Date:", value=self.date.value, inline=True)
+            embed_message.add_field(name="$ Paid (Lifetime):", value=self.paid.value, inline=True)
+            embed_message.add_field(name="Details:", value=self.details.value, inline=True)
+            embed_message.set_footer(text="Review decision:")
+            
+            thumbnail_path = "res/request.png"
+            thumbnail_filename = "request.png"
+            embed_message.set_thumbnail(url=f"attachment://{thumbnail_filename}")
+
+            with open(thumbnail_path, "rb") as file:
+                message = await channel.send(
+                    content=f"{interaction.user.mention} submitted a custom for review:",
+                    embed=embed_message,
+                    file=discord.File(file, filename=thumbnail_filename)
+                )
+                await message.edit(view=CsView(message, interaction.channel, interaction.user, interaction.channel.category.name, embed_message))
+
+            await interaction.response.send_message(f"{interaction.user.mention} Thank you for submitting your custom, it will be reviewed!", ephemeral=True)
+        except Exception as e:
+            await interaction.response.send_message(f"_Error submitting the custom, contact staff {e}_", ephemeral=True)
+        
+        
+@client.tree.command(name="cs", description="Submit custom for approval", guild=settings.GUILD_ID)
+async def report(interaction: discord.Interaction):
+    if not interaction.channel.name.lower().__contains__("cs-request"):
+        await interaction.response.send_message(f"_Please submit cs in cs request channel._", ephemeral=True)
+        return
+    await interaction.response.send_modal(CustomsModal())
+
         
 #RUN BOT     
 if __name__ == "__main__":
