@@ -108,9 +108,8 @@ async def executeCommand(interaction: discord.Interaction, model_name: str):
         createdCategory = await interaction.guild.create_category(model_name, overwrites=overwrites)
         await interaction.guild.create_text_channel("💬-staff-chat", category=createdCategory)
         await interaction.guild.create_text_channel("📰-info", category=createdCategory)
-        await interaction.guild.create_text_channel("📨-mma-request", category=createdCategory)
-        await interaction.guild.create_text_channel("📷-cs-request", category=createdCategory)
-        await interaction.response.send_message(f"_Successfully created {model_name} model space!_", ephemeral=True)
+        await interaction.guild.create_text_channel("📷-customs", category=createdCategory)
+        await interaction.response.send_message(f"_Successfully created {model_name} model space, you can now use /setup in staff chat to create clock in vc!_", ephemeral=True)
     except Exception as e:
         await interaction.response.send_message(f"_Channel creation failed {e}_", ephemeral=True)
         
@@ -223,16 +222,16 @@ async def executeCommand(interaction: discord.Interaction):
 ### MMA ###
 @client.tree.command(name="mma", description="Submit MM for approval", guilds=[settings.GUILD_ID_DEV, settings.GUILD_ID_PROD])
 async def report(interaction: discord.Interaction):
-    if not interaction.channel.name.lower().__contains__("mma-request"):
-        await interaction.response.send_message(f"_Please submit mms in mma request channel._", ephemeral=True)
+    if not interaction.channel.name.lower().__contains__("-staff-chat"):
+        await interaction.response.send_message(f"_Please submit mms in staff chat model channel._", ephemeral=True)
         return
     await interaction.response.send_modal(massmsg.MassMessageModal())
     
 ### CUSTOMS ###
 @client.tree.command(name="cs", description="Submit custom for approval", guilds=[settings.GUILD_ID_DEV, settings.GUILD_ID_PROD])
 async def report(interaction: discord.Interaction):
-    if not interaction.channel.name.lower().__contains__("cs-request"):
-        await interaction.response.send_message(f"_Please submit cs in cs request channel._", ephemeral=True)
+    if not interaction.channel.name.lower().__contains__("-customs"):
+        await interaction.response.send_message(f"_Please submit cs in customs model channel._", ephemeral=True)
         return
     await interaction.response.send_modal(customs.CustomsModal())
 

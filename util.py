@@ -46,3 +46,11 @@ def getCsApprovalChannel(interaction: discord.Interaction) -> discord.TextChanne
     else:
         return None
     
+def getConsultRole(interaction: discord.Interaction) -> discord.Role:
+    if interaction.guild_id == settings.GUILD_ID_INT_DEV:
+        return discord.utils.get(interaction.guild.roles, id=settings.CONSULT_ID_DEV)
+    elif interaction.guild_id == settings.GUILD_ID_INT_PROD:
+        return discord.utils.get(interaction.guild.roles, id=settings.CONSULT_ID_PROD)
+    else:
+        return None
+    

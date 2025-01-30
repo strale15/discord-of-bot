@@ -26,7 +26,7 @@ class CustomsChangeModal(discord.ui.Modal, title="Comment on CS"):
     async def on_submit(self, interaction: discord. Interaction):
         await self.requestMsg.delete()
         
-        self.embed.color = discord.Color.yellow()
+        self.embed.color = discord.Color.dark_blue()
         self.embed.remove_footer()
         self.embed.add_field(name="Comment", value=self.comment.value, inline=False)
         
@@ -42,33 +42,17 @@ class CsView(discord.ui.View):
         self.employee = employee
         self.modelName = modelName
         self.embed = embed
-
-    @discord.ui.button(label="Approve", style=discord.ButtonStyle.green)
-    async def approve(self, interaction: discord.Interaction, Button: discord.ui.Button):
-        await self.cs.delete()
-        self.embed.remove_footer()
-        self.embed.color = discord.Color.green()
-        await self.requestChannel.send(f"{self.employee.mention} your cs for **{self.modelName}** was approved by **{interaction.user.display_name}**\n_Custom:_", embed=self.embed)
-        await interaction.response.send_message(f"_Approved the cs_", ephemeral=True)
         
-    @discord.ui.button(label="Request change", style=discord.ButtonStyle.blurple)
+    @discord.ui.button(label="Add comment", style=discord.ButtonStyle.blurple)
     async def requestChange(self, interaction: discord.Interaction, Button: discord.ui.Button):
         await interaction.response.send_modal(CustomsChangeModal(interaction, self.requestChannel, self.employee, self.modelName, self.cs, self.embed))
-        
-    @discord.ui.button(label="Reject", style=discord.ButtonStyle.red)
-    async def reject(self, interaction: discord.Interaction, Button: discord.ui.Button):
-        await self.cs.delete()
-        self.embed.remove_footer()
-        self.embed.color = discord.Color.red()
-        await self.requestChannel.send(f"{self.employee.mention} your cs for **{self.modelName}** was rejected by **{interaction.user.display_name}**\n_Custom:_", embed=self.embed)
-        await interaction.response.send_message(f"_Rejected the cs_", ephemeral=True)
 
 class CustomsModal(discord.ui.Modal, title="Submit Custom"):
     def __init__(self):
         super().__init__(title="Submit Custom")    
         self.ofName = discord.ui.TextInput(
             label="Onlyfans username:",
-            placeholder="some incel username",
+            placeholder="some username...",
             required=True,
             min_length=1,
             max_length=20,
@@ -127,8 +111,9 @@ class CustomsModal(discord.ui.Modal, title="Submit Custom"):
             embed_message.set_thumbnail(url=f"attachment://{thumbnail_filename}")
 
             with open(thumbnail_path, "rb") as file:
+                consultantRole = util.getConsultRole(interaction)
                 message = await channel.send(
-                    content=f"{interaction.user.mention} submitted a custom for review:",
+                    content=f"{consultantRole.mention}\n{interaction.user.mention} submitted a custom for review:",
                     embed=embed_message,
                     file=discord.File(file, filename=thumbnail_filename)
                 )
