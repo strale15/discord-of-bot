@@ -6,7 +6,6 @@ from dotenv import load_dotenv
 import discord
 
 load_dotenv()
-#MTMyOTM5ODQ4NDQ4NjMyODMyMA.Gwf-my.CpyZAjMb2Pjy2nh4MfnYCBix0glfu3Crz5jByA
 
 DISCORD_API_SECRET = os.getenv("DISCORD_API_TOKEN")
 
@@ -17,11 +16,19 @@ COGS_DIR = BASE_DIR / "cogs"
 
 VIDEOCMDS_DIR = BASE_DIR / "videocmds"
 
-GUILD_ID = discord.Object(id=int(os.getenv("GUILD_ID")))
-FEEDBACK_CH = int(os.getenv("FEEDBACK_CH", 0))
-GUILD_ID_INT = int(os.getenv("GUILD_ID"))
-MMA_APPROVAL_ID = int(os.getenv("MMA_APPROVAL_ID"))
-CUSTOMS_QUEUE_ID = int(os.getenv("CUSTOMS_QUEUE_ID"))
+#DEV
+GUILD_ID_INT_DEV = int(os.getenv("GUILD_ID_DEV"))
+GUILD_ID_DEV = discord.Object(id=GUILD_ID_INT_DEV)
+
+MMA_APPROVAL_ID_DEV = int(os.getenv("MMA_APPROVAL_ID_DEV"))
+CUSTOMS_QUEUE_ID_DEV = int(os.getenv("CUSTOMS_QUEUE_ID_DEV"))
+
+#PROD
+GUILD_ID_INT_PROD = int(os.getenv("GUILD_ID_PROD"))
+GUILD_ID_PROD = discord.Object(id=GUILD_ID_INT_PROD)
+
+MMA_APPROVAL_ID_PROD = int(os.getenv("MMA_APPROVAL_ID_PROD"))
+CUSTOMS_QUEUE_ID_PROD = int(os.getenv("CUSTOMS_QUEUE_ID_PROD"))
 
 LOGGING_CONFIG = {
     "version": 1,
