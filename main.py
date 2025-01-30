@@ -3,7 +3,7 @@ from discord.ext import commands
 from discord import app_commands
 
 import settings
-from classes import massmsg, customs
+from classes import massmsg, customs, formats
 from util import *
 
 class MyClient(commands.Bot):
@@ -32,7 +32,7 @@ client = MyClient(command_prefix="!", intents=intents)
 async def on_error(interaction: discord.Interaction, error: discord.app_commands.AppCommandError) -> None:
     log.error(f"Error : {error}")
     #await interaction.response.send_message(f'Error global: ({error})', ephemeral=True)
-    
+       
 @client.tree.command(name="test", description="Performs a sanity check.", guilds=[settings.GUILD_ID_DEV, settings.GUILD_ID_PROD])
 async def testSanity(interaction: discord.Interaction):
     await interaction.response.send_message("*Hi!* Everything seems to work properly 😊", ephemeral=True)
@@ -40,6 +40,13 @@ async def testSanity(interaction: discord.Interaction):
 @client.tree.command(name="test-param", description="Performs a param check.", guilds=[settings.GUILD_ID_DEV, settings.GUILD_ID_PROD])
 async def testSanity(interaction: discord.Interaction, text: str):
     await interaction.response.send_message(text, ephemeral=True)
+    
+# Format command
+@app_commands.checks.has_permissions(manage_channels=True)
+@app_commands.default_permissions(manage_channels=True)
+@client.tree.command(name="format", description="Makes a nicely formatted message", guilds=[settings.GUILD_ID_DEV, settings.GUILD_ID_PROD])
+async def multiline(interaction: discord.Interaction):
+    await interaction.response.send_modal(formats.FormatModal())
         
 #Setup command
 @app_commands.checks.has_permissions(manage_channels=True)
