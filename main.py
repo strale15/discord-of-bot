@@ -94,10 +94,10 @@ async def executeCommand(interaction: discord.Interaction, model_name: str):
     
     try:
         createdCategory = await interaction.guild.create_category(model_name, overwrites=overwrites)
-        await interaction.guild.create_text_channel("chatter", category=createdCategory)
-        await interaction.guild.create_text_channel("staff", category=createdCategory)
-        await interaction.guild.create_text_channel("mma-request", category=createdCategory)
-        await interaction.guild.create_text_channel("cs-request", category=createdCategory)
+        await interaction.guild.create_text_channel("💬-staff-chat", category=createdCategory)
+        await interaction.guild.create_text_channel("📰-info", category=createdCategory)
+        await interaction.guild.create_text_channel("📨-mma-request", category=createdCategory)
+        await interaction.guild.create_text_channel("📷-cs-request", category=createdCategory)
         await interaction.response.send_message(f"_Successfully created {model_name} model space!_", ephemeral=True)
     except Exception as e:
         await interaction.response.send_message(f"_Channel creation failed {e}_", ephemeral=True)
@@ -301,7 +301,7 @@ class MmaView(discord.ui.View):
         await self.mm.delete()
         self.embed.color = discord.Color.green()
         self.embed.remove_footer()
-        await self.requestChannel.send(f"{self.employee.mention} your mm for **{self.modelName}** was approved by **{interaction.user.nick}**\n_Approved mm request:_", embed=self.embed)
+        await self.requestChannel.send(f"{self.employee.mention} your mm for **{self.modelName}** was approved by **{interaction.user.display_name}**\n_Approved mm request:_", embed=self.embed)
         await interaction.response.send_message(f"_Approved the mm_", ephemeral=True)
         
     @discord.ui.button(label="Request change", style=discord.ButtonStyle.blurple)
@@ -311,10 +311,13 @@ class MmaView(discord.ui.View):
     @discord.ui.button(label="Reject", style=discord.ButtonStyle.red)
     async def reject(self, interaction: discord.Interaction, Button: discord.ui.Button):
         await self.mm.delete()
-        self.embed.color = discord.Color.red()
-        self.embed.remove_footer()
-        await self.requestChannel.send(f"{self.employee.mention} your mm for **{self.modelName}** was rejected by **{interaction.user.display_name}**\n_Rejected mm request:_", embed=self.embed)
-        await interaction.response.send_message(f"_Rejected the mm_", ephemeral=True)
+        try:
+            self.embed.color = discord.Color.red()
+            self.embed.remove_footer()
+            await self.requestChannel.send(f"{self.employee.mention} your mm for **{self.modelName}** was rejected by **{interaction.user.display_name}**\n_Rejected mm request:_", embed=self.embed)
+            await interaction.response.send_message(f"_Rejected the mm_", ephemeral=True)
+        except:
+            await interaction.response.send_message(f"_Rejected the mm but there was an error with sending the notification._", ephemeral=True)
 
 class MassMessageModal(discord.ui.Modal, title="Submit MM"):
     def __init__(self):
