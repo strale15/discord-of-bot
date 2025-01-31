@@ -74,10 +74,15 @@ async def setupClockInChannel(interaction: discord.Interaction):
         await interaction.response.send_message(f"_{modelName} role does not exist, please create it._", ephemeral=True)
         return
     
+    ppvRole = util.getPPVEngRole(interaction)
+    supervisorRole = util.getSupervisorRole(interaction)
+    
     overwrites = {
                     interaction.guild.default_role: discord.PermissionOverwrite(read_messages=False, connect=False),
-                    modelRole: discord.PermissionOverwrite(read_messages=True, send_messages=True, connect=True, speak=True)
-                  }
+                    modelRole: discord.PermissionOverwrite(read_messages=True, send_messages=True, connect=True, speak=True),
+                    ppvRole: discord.PermissionOverwrite(read_messages=True, send_messages=True, connect=True, speak=True),
+                    supervisorRole: discord.PermissionOverwrite(read_messages=True, send_messages=True, connect=True, speak=True)
+                }
     
     try:
         createdChannel = await interaction.guild.create_voice_channel("❌" + modelName + " - ", category=clockInCategory, overwrites=overwrites)
@@ -109,17 +114,10 @@ async def executeCommand(interaction: discord.Interaction, model_name: str):
                     supervisorRole: discord.PermissionOverwrite(read_messages=True, send_messages=True, connect=True, speak=True)
                 }
     
-    overwrites2 = {
-                    interaction.guild.default_role: discord.PermissionOverwrite(read_messages=False, connect=False),
-                    modelRole: discord.PermissionOverwrite(read_messages=True, send_messages=False, connect=True, speak=True),
-                    ppvRole: discord.PermissionOverwrite(read_messages=True, send_messages=True, connect=True, speak=True),
-                    supervisorRole: discord.PermissionOverwrite(read_messages=True, send_messages=True, connect=True, speak=True)
-                }
-    
     try:
         createdCategory = await interaction.guild.create_category(model_name, overwrites=overwrites)
         await interaction.guild.create_text_channel("💬-staff-chat", category=createdCategory)
-        await interaction.guild.create_text_channel("📰-info", category=createdCategory, overwrites=overwrites2)
+        await interaction.guild.create_text_channel("📰-info", category=createdCategory)
         await interaction.guild.create_text_channel("📷-customs", category=createdCategory)
         await interaction.response.send_message(f"_Successfully created {model_name} model space, you can now use /setup in staff chat to create clock in vc!_", ephemeral=True)
     except Exception as e:
