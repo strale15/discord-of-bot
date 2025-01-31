@@ -74,13 +74,11 @@ async def setupClockInChannel(interaction: discord.Interaction):
         await interaction.response.send_message(f"_{modelName} role does not exist, please create it._", ephemeral=True)
         return
     
-    ppvRole = util.getPPVEngRole(interaction)
     supervisorRole = util.getSupervisorRole(interaction)
     
     overwrites = {
                     interaction.guild.default_role: discord.PermissionOverwrite(read_messages=False, connect=False),
                     modelRole: discord.PermissionOverwrite(read_messages=True, send_messages=True, connect=True, speak=True),
-                    ppvRole: discord.PermissionOverwrite(read_messages=True, send_messages=True, connect=True, speak=True),
                     supervisorRole: discord.PermissionOverwrite(read_messages=True, send_messages=True, connect=True, speak=True)
                 }
     
