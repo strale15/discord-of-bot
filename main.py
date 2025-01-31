@@ -35,7 +35,7 @@ async def on_error(interaction: discord.Interaction, error: discord.app_commands
        
 @client.tree.command(name="test", description="Performs a sanity check.", guilds=[settings.GUILD_ID_DEV, settings.GUILD_ID_PROD])
 async def testSanity(interaction: discord.Interaction):
-    await interaction.response.send_message("*Hi!* Everything seems to work properly 😊", ephemeral=True)
+    await interaction.response.send_message(f"*Hi!* Everything seems to work properly 😊 (everything is configured, latency - {client.latency})", ephemeral=True)
     
 @client.tree.command(name="test-param", description="Performs a param check.", guilds=[settings.GUILD_ID_DEV, settings.GUILD_ID_PROD])
 async def testSanity(interaction: discord.Interaction, text: str):
