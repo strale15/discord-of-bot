@@ -4,6 +4,7 @@ __pycache__/
 *$py.class
 bot-env/
 logs/
+.vscode/
 
 # C extensions
 *.so
