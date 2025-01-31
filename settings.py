@@ -24,6 +24,8 @@ MMA_APPROVAL_ID_DEV = int(os.getenv("MMA_APPROVAL_ID_DEV"))
 CUSTOMS_QUEUE_ID_DEV = int(os.getenv("CUSTOMS_QUEUE_ID_DEV"))
 
 CONSULT_ID_DEV = int(os.getenv("CONSULT_ID_DEV"))
+SUPERVISOR_ID_DEV = int(os.getenv("SUPERVISOR_ID_DEV"))
+PPV_ENG_ID_DEV = int(os.getenv("PPV_ENG_ID_DEV"))
 
 #PROD
 GUILD_ID_INT_PROD = int(os.getenv("GUILD_ID_PROD"))
@@ -33,6 +35,8 @@ MMA_APPROVAL_ID_PROD = int(os.getenv("MMA_APPROVAL_ID_PROD"))
 CUSTOMS_QUEUE_ID_PROD = int(os.getenv("CUSTOMS_QUEUE_ID_PROD"))
 
 CONSULT_ID_PROD = int(os.getenv("CONSULT_ID_PROD"))
+SUPERVISOR_ID_PROD = int(os.getenv("SUPERVISOR_ID_PROD"))
+PPV_ENG_ID_PROD = int(os.getenv("PPV_ENG_ID_PROD"))
 
 LOGGING_CONFIG = {
     "version": 1,

@@ -5,7 +5,7 @@ from discord import app_commands
 import settings
 from classes import massmsg, customs, formats
 from util import *
-
+import util
 class MyClient(commands.Bot):
     async def on_ready(self):
         log.info(f'Logged on as {self.user}!')
@@ -97,17 +97,29 @@ async def executeCommand(interaction: discord.Interaction, model_name: str):
     
     modelRole = getRoleByName(interaction.guild, model_name)
     if modelRole is None:
-        modelRole = await interaction.guild.create_role(name=model_name, color=discord.Colour.red())
+        modelRole = await interaction.guild.create_role(name=model_name, color=discord.Colour.magenta())
+        
+    ppvRole = util.getPPVEngRole(interaction)
+    supervisorRole = util.getSupervisorRole(interaction)
     
     overwrites = {
                     interaction.guild.default_role: discord.PermissionOverwrite(read_messages=False, connect=False),
-                    modelRole: discord.PermissionOverwrite(read_messages=True, send_messages=True, connect=True, speak=True)
+                    modelRole: discord.PermissionOverwrite(read_messages=True, send_messages=True, connect=True, speak=True),
+                    ppvRole: discord.PermissionOverwrite(read_messages=True, send_messages=True, connect=True, speak=True),
+                    supervisorRole: discord.PermissionOverwrite(read_messages=True, send_messages=True, connect=True, speak=True)
+                }
+    
+    overwrites2 = {
+                    interaction.guild.default_role: discord.PermissionOverwrite(read_messages=False, connect=False),
+                    modelRole: discord.PermissionOverwrite(read_messages=True, send_messages=False, connect=True, speak=True),
+                    ppvRole: discord.PermissionOverwrite(read_messages=True, send_messages=True, connect=True, speak=True),
+                    supervisorRole: discord.PermissionOverwrite(read_messages=True, send_messages=True, connect=True, speak=True)
                 }
     
     try:
         createdCategory = await interaction.guild.create_category(model_name, overwrites=overwrites)
         await interaction.guild.create_text_channel("💬-staff-chat", category=createdCategory)
-        await interaction.guild.create_text_channel("📰-info", category=createdCategory)
+        await interaction.guild.create_text_channel("📰-info", category=createdCategory, overwrites=overwrites2)
         await interaction.guild.create_text_channel("📷-customs", category=createdCategory)
         await interaction.response.send_message(f"_Successfully created {model_name} model space, you can now use /setup in staff chat to create clock in vc!_", ephemeral=True)
     except Exception as e:

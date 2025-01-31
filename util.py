@@ -54,3 +54,19 @@ def getConsultRole(interaction: discord.Interaction) -> discord.Role:
     else:
         return None
     
+def getSupervisorRole(interaction: discord.Interaction) -> discord.Role:
+    if interaction.guild_id == settings.GUILD_ID_INT_DEV:
+        return discord.utils.get(interaction.guild.roles, id=settings.SUPERVISOR_ID_DEV)
+    elif interaction.guild_id == settings.GUILD_ID_INT_PROD:
+        return discord.utils.get(interaction.guild.roles, id=settings.SUPERVISOR_ID_PROD)
+    else:
+        return None
+    
+def getPPVEngRole(interaction: discord.Interaction) -> discord.Role:
+    if interaction.guild_id == settings.GUILD_ID_INT_DEV:
+        return discord.utils.get(interaction.guild.roles, id=settings.PPV_ENG_ID_DEV)
+    elif interaction.guild_id == settings.GUILD_ID_INT_PROD:
+        return discord.utils.get(interaction.guild.roles, id=settings.PPV_ENG_ID_PROD)
+    else:
+        return None
+    
