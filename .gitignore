@@ -2,6 +2,8 @@
 __pycache__/
 *.py[cod]
 *$py.class
+bot-env/
+logs/
 
 # C extensions
 *.so

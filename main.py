@@ -158,7 +158,7 @@ async def executeCommand(interaction: discord.Interaction, role_name: str):
 #Delete role
 @app_commands.checks.has_permissions(manage_roles=True)
 @app_commands.default_permissions(manage_roles=True)
-@client.tree.command(name="d-role", description="Deletes a role", guilds=[settings.GUILD_ID_DEV, settings.GUILD_ID_PROD])
+@client.tree.command(name="d-role", description="Deletes a role", guilds=[settings.GUILD_ID_DEV])
 async def executeCommand(interaction: discord.Interaction, role_name: str):
     modelRole = getRoleByName(interaction.guild, role_name)
     if modelRole is None:
