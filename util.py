@@ -18,7 +18,7 @@ def getClockedInUsernames(channelName: str) -> list:
         return None
     
     allUsers = channelName.split('-')[1].strip()
-    usernames = allUsers.split('+')
+    usernames = allUsers.split(',')
     return [username.strip() for username in usernames]
 
 def getBaseChannelName(channelName: str) -> str:
@@ -43,6 +43,22 @@ def getCsApprovalChannel(interaction: discord.Interaction) -> discord.TextChanne
         return discord.utils.get(interaction.guild.channels, id=settings.CUSTOMS_QUEUE_ID_DEV)
     elif interaction.guild_id == settings.GUILD_ID_INT_PROD:
         return discord.utils.get(interaction.guild.channels, id=settings.CUSTOMS_QUEUE_ID_PROD)
+    else:
+        return None
+
+def getVoiceQueueChannel(interaction: discord.Interaction) -> discord.TextChannel:
+    if interaction.guild_id == settings.GUILD_ID_INT_DEV:
+        return discord.utils.get(interaction.guild.channels, id=settings.VOICE_QUEUE_ID_DEV)
+    elif interaction.guild_id == settings.GUILD_ID_INT_PROD:
+        return discord.utils.get(interaction.guild.channels, id=settings.VOICE_QUEUE_ID_PROD)
+    else:
+        return None
+    
+def getLeaksChannel(interaction: discord.Interaction) -> discord.TextChannel:
+    if interaction.guild_id == settings.GUILD_ID_INT_DEV:
+        return discord.utils.get(interaction.guild.channels, id=settings.LEAKS_QUEUE_ID_DEV)
+    elif interaction.guild_id == settings.GUILD_ID_INT_PROD:
+        return discord.utils.get(interaction.guild.channels, id=settings.LEAKS_QUEUE_ID_PROD)
     else:
         return None
     

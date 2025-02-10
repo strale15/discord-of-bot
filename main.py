@@ -1,9 +1,9 @@
 import discord
 from discord.ext import commands
-from discord import app_commands
+from discord import HTTPException, app_commands
 
 import settings
-from classes import massmsg, customs, formats
+from classes import massmsg, customs, formats, voice, leaks
 from util import *
 import util
 class MyClient(commands.Bot):
@@ -23,7 +23,7 @@ log = settings.logging.getLogger()
 intents = discord.Intents.default()
 intents.message_content = True
 
-client = MyClient(command_prefix="!", intents=intents)
+client = MyClient(command_prefix="!", intents=intents, max_ratelimit_timeout=90)
 
 ###---------------- COMMANDS ----------------###
             
@@ -31,15 +31,17 @@ client = MyClient(command_prefix="!", intents=intents)
 @client.tree.error
 async def on_error(interaction: discord.Interaction, error: discord.app_commands.AppCommandError) -> None:
     log.error(f"Error : {error}")
-    #await interaction.response.send_message(f'Error global: ({error})', ephemeral=True)
+    #await interaction.response.send_message(f'Error global: ({error})', ephemeral=True, delete_after=settings.DELETE_AFTER)
        
-@client.tree.command(name="test", description="Performs a sanity check.", guilds=[settings.GUILD_ID_DEV, settings.GUILD_ID_PROD])
+@app_commands.checks.has_permissions(manage_channels=True)
+@app_commands.default_permissions(manage_channels=True)
+@client.tree.command(name="ping", description="Check bot latency.", guilds=[settings.GUILD_ID_DEV, settings.GUILD_ID_PROD])
 async def testSanity(interaction: discord.Interaction):
-    await interaction.response.send_message(f"*Hi!* Everything seems to work properly 😊 (everything is configured, latency - {client.latency})", ephemeral=True)
+    await interaction.response.send_message(f"*Hi!* Everything seems to work properly 😊 (everything is configured, latency - {client.latency})", ephemeral=True, delete_after=settings.DELETE_AFTER)
     
-@client.tree.command(name="test-param", description="Performs a param check.", guilds=[settings.GUILD_ID_DEV, settings.GUILD_ID_PROD])
+@client.tree.command(name="test-param", description="Performs a param check.", guilds=[settings.GUILD_ID_DEV])
 async def testSanity(interaction: discord.Interaction, text: str):
-    await interaction.response.send_message(text, ephemeral=True)
+    await interaction.response.send_message(text, ephemeral=True, delete_after=settings.DELETE_AFTER)
     
 # Format command
 @app_commands.checks.has_permissions(manage_channels=True)
@@ -54,24 +56,24 @@ async def multiline(interaction: discord.Interaction):
 @client.tree.command(name="setup", description="Creates voice channel in 'clock in' based on the model category", guilds=[settings.GUILD_ID_DEV, settings.GUILD_ID_PROD])
 async def setupClockInChannel(interaction: discord.Interaction):
     if interaction.channel.category is None:
-        await interaction.response.send_message(f"_Please use the command in appropriate model text channel._", ephemeral=True)
+        await interaction.response.send_message(f"_Please use the command in appropriate model text channel._", ephemeral=True, delete_after=settings.DELETE_AFTER)
         return
         
     modelName = interaction.channel.category.name
     
     clockInCategory = getCategoryByName(interaction.guild, "clock in")
     if clockInCategory is None:
-        await interaction.response.send_message(f"_'Clock in' category' does not exist, please create it._", ephemeral=True)
+        await interaction.response.send_message(f"_'Clock in' category' does not exist, please create it._", ephemeral=True, delete_after=settings.DELETE_AFTER)
         return
     
     for voice in clockInCategory.voice_channels:
         if voice.name.lower().__contains__(modelName.lower()):
-            await interaction.response.send_message(f"_Model voice channel is already setup._", ephemeral=True)
+            await interaction.response.send_message(f"_Model voice channel is already setup._", ephemeral=True, delete_after=settings.DELETE_AFTER)
             return
     
     modelRole = getRoleByName(interaction.guild, modelName)
     if modelRole is None:
-        await interaction.response.send_message(f"_{modelName} role does not exist, please create it._", ephemeral=True)
+        await interaction.response.send_message(f"_{modelName} role does not exist, please create it._", ephemeral=True, delete_after=settings.DELETE_AFTER)
         return
     
     supervisorRole = util.getSupervisorRole(interaction)
@@ -83,10 +85,10 @@ async def setupClockInChannel(interaction: discord.Interaction):
                 }
     
     try:
-        createdChannel = await interaction.guild.create_voice_channel("❌" + modelName + " - ", category=clockInCategory, overwrites=overwrites)
-        await interaction.response.send_message(f"_Successfully created {createdChannel.name} vc!_", ephemeral=True)
+        createdChannel = await interaction.guild.create_voice_channel("❌" + modelName + " -", category=clockInCategory, overwrites=overwrites)
+        await interaction.response.send_message(f"_Successfully created {createdChannel.name} vc!_", ephemeral=True, delete_after=settings.DELETE_AFTER)
     except Exception as e:
-        await interaction.response.send_message(f"_Channel creation failed {e}_", ephemeral=True)
+        await interaction.response.send_message(f"_Channel creation failed {e}_", ephemeral=True, delete_after=settings.DELETE_AFTER)
         
 #Recruit command - helper
 @app_commands.checks.has_permissions(manage_channels=True)
@@ -95,7 +97,7 @@ async def setupClockInChannel(interaction: discord.Interaction):
 async def executeCommand(interaction: discord.Interaction, model_name: str):
     alreadyExistingCategory = getCategoryByName(interaction.guild, model_name)
     if alreadyExistingCategory is not None:
-        await interaction.response.send_message(f"_{model_name} category is already setup!_", ephemeral=True)
+        await interaction.response.send_message(f"_{model_name} category is already setup!_", ephemeral=True, delete_after=settings.DELETE_AFTER)
         return
     
     modelRole = getRoleByName(interaction.guild, model_name)
@@ -117,9 +119,9 @@ async def executeCommand(interaction: discord.Interaction, model_name: str):
         await interaction.guild.create_text_channel("💬-staff-chat", category=createdCategory)
         await interaction.guild.create_text_channel("📰-info", category=createdCategory)
         await interaction.guild.create_text_channel("📷-customs", category=createdCategory)
-        await interaction.response.send_message(f"_Successfully created {model_name} model space, you can now use /setup in staff chat to create clock in vc!_", ephemeral=True)
+        await interaction.response.send_message(f"_Successfully created {model_name} model space, you can now use /setup in staff chat to create clock in vc!_", ephemeral=True, delete_after=settings.DELETE_AFTER)
     except Exception as e:
-        await interaction.response.send_message(f"_Channel creation failed {e}_", ephemeral=True)
+        await interaction.response.send_message(f"_Channel creation failed {e}_", ephemeral=True, delete_after=settings.DELETE_AFTER)
         
 #Clean model info
 @app_commands.checks.has_permissions(manage_channels=True)
@@ -147,9 +149,9 @@ async def executeCommand(interaction: discord.Interaction, model_name: str):
         if modelRole is not None:
             await modelRole.delete()
             
-        await interaction.response.send_message(f"Successfully deleted all {model_name} info!", ephemeral=True)
+        await interaction.response.send_message(f"Successfully deleted all {model_name} info!", ephemeral=True, delete_after=settings.DELETE_AFTER)
     except Exception as e:
-        await interaction.response.send_message(f"Failed to delete model info: {e}", ephemeral=True)
+        await interaction.response.send_message(f"Failed to delete model info: {e}", ephemeral=True, delete_after=settings.DELETE_AFTER)
         
 #Create role - helper
 @app_commands.checks.has_permissions(manage_roles=True)
@@ -161,7 +163,7 @@ async def executeCommand(interaction: discord.Interaction, role_name: str):
         modelRole = await interaction.guild.create_role(name=role_name, color=discord.Colour.random())
         
     await interaction.user.add_roles(modelRole)
-    await interaction.response.send_message(f"You received the role {role_name}", ephemeral=True)
+    await interaction.response.send_message(f"You received the role {role_name}", ephemeral=True, delete_after=settings.DELETE_AFTER)
     
 #Delete role
 @app_commands.checks.has_permissions(manage_roles=True)
@@ -170,14 +172,14 @@ async def executeCommand(interaction: discord.Interaction, role_name: str):
 async def executeCommand(interaction: discord.Interaction, role_name: str):
     modelRole = getRoleByName(interaction.guild, role_name)
     if modelRole is None:
-        await interaction.response.send_message(f"_Role {role_name} does not exist!_", ephemeral=True)
+        await interaction.response.send_message(f"_Role {role_name} does not exist!_", ephemeral=True, delete_after=settings.DELETE_AFTER)
         
     await modelRole.delete()
-    await interaction.response.send_message(f"_{role_name} deleted!_ 🚮", ephemeral=True)
+    await interaction.response.send_message(f"_{role_name} deleted!_ 🚮", ephemeral=True, delete_after=settings.DELETE_AFTER)
         
 #Clock in command
 @client.tree.command(name="ci", description="Clocks you in. Use in model text channel to clock in for that model.", guilds=[settings.GUILD_ID_DEV, settings.GUILD_ID_PROD])
-async def executeCommand(interaction: discord.Interaction):
+async def ciCommand(interaction: discord.Interaction):
     if interaction.channel.category is None:
         await interaction.response.send_message(f"_Wrong channel, use one of the model text channels._")
         return
@@ -189,22 +191,28 @@ async def executeCommand(interaction: discord.Interaction):
     for channel in clockInCategory.channels:
         if isinstance(channel, discord.VoiceChannel) and channel.name.lower().__contains__(modelName):
             if channel.name.__contains__(username):
-                await interaction.response.send_message(f"_You are already clocked in._")
+                await interaction.response.send_message(f"_You are already clocked in._", ephemeral=True, delete_after=settings.DELETE_AFTER)
                 return
             
             if channel.name[-1] != '-':
-                await channel.edit(name=channel.name + "+" + username)
+                newChannelName = channel.name + ", " + username
             else:
-                await channel.edit(name="✅" + channel.name[1:] + " " + username)
-                
-            await interaction.response.send_message(f"You are now clocked in! Good luck soldier 🫡", ephemeral=True)
+                newChannelName = "✅" + channel.name[1:] + " " + username
+              
+            await channel.edit(name=newChannelName)  
+            await interaction.response.send_message(f"You are now clocked in! Good luck soldier 🫡", ephemeral=True, delete_after=settings.DELETE_AFTER)
             return
         
-    await interaction.response.send_message(f"_Model is missing the voice channel, please create one using /setup._", ephemeral=True)
+    await interaction.response.send_message(f"_Model is missing the voice channel, please create one using /setup._", ephemeral=True, delete_after=settings.DELETE_AFTER)
+    
+@ciCommand.error
+async def on_clock_command_error(interaction: discord.Interaction, error: discord.app_commands.AppCommandError) -> None:
+    if str(error).__contains__("RateLimited"):
+        await interaction.response.send_message("_Please wait at least **10** minutes before clocking in!_", ephemeral=True, delete_after=settings.DELETE_AFTER)
     
 #Clock out command
 @client.tree.command(name="co", description="Clocks you out. Use in model text channel to clock out for that model.", guilds=[settings.GUILD_ID_DEV, settings.GUILD_ID_PROD])
-async def executeCommand(interaction: discord.Interaction):
+async def coCommand(interaction: discord.Interaction):
     modelName = interaction.channel.category.name.lower()
     clockInCategory = getCategoryByName(interaction.guild, 'clock in')
     username = interaction.user.display_name
@@ -219,29 +227,72 @@ async def executeCommand(interaction: discord.Interaction):
                 if len(usernames) == 0:
                     newChannelName = "❌" + getBaseChannelName(channel.name)[1:] + " -"
                 else:
-                    newChannelName = getBaseChannelName(channel.name) + " - " + '+'.join(usernames)
+                    newChannelName = getBaseChannelName(channel.name) + " - " + ', '.join(usernames)
                     
                 await channel.edit(name=newChannelName)
-                await interaction.response.send_message(f"_You are now clocked out._", ephemeral=True)
+                await interaction.response.send_message("_You are now clocked out._", ephemeral=True, delete_after=settings.DELETE_AFTER)
                 return
             
-    await interaction.response.send_message(f"_You are not clocked in on any model._", ephemeral=True)
+    await interaction.response.send_message(f"_You are not clocked in on any model._", ephemeral=True, delete_after=settings.DELETE_AFTER)
+    
+@coCommand.error
+async def on_clock_command_error(interaction: discord.Interaction, error: discord.app_commands.AppCommandError) -> None:
+    if str(error).__contains__("RateLimited"):
+        await interaction.response.send_message("_Please wait at least **10** minutes before clocking out!_", ephemeral=True, delete_after=settings.DELETE_AFTER)
+        
+#Clock out everyone
+@app_commands.checks.has_permissions(manage_channels=True)
+@app_commands.default_permissions(manage_channels=True)
+@client.tree.command(name="co-all", description="Clocks everyone from vc. Use in model text channel to clock everyone out for that model.", guilds=[settings.GUILD_ID_DEV, settings.GUILD_ID_PROD])
+async def coallCommand(interaction: discord.Interaction):
+    modelName = interaction.channel.category.name.lower()
+    clockInCategory = getCategoryByName(interaction.guild, 'clock in')
+    
+    for channel in clockInCategory.channels:
+        if isinstance(channel, discord.VoiceChannel) and channel.name.lower().__contains__(modelName):
+            newChannelName = "❌" + getBaseChannelName(channel.name)[1:] + " -"
+            await channel.edit(name=newChannelName)
+            await interaction.response.send_message(f"_Everyone is now clocked out from {modelName}._", ephemeral=True, delete_after=settings.DELETE_AFTER)
+            return
+                          
+    await interaction.response.send_message(f"_Error occurred._", ephemeral=True, delete_after=settings.DELETE_AFTER)
+    
+@coallCommand.error
+async def on_clock_command_error(interaction: discord.Interaction, error: discord.app_commands.AppCommandError) -> None:
+    if str(error).__contains__("RateLimited"):
+        await interaction.response.send_message("_Please wait at least **10** minutes before clocking everyone out!_", ephemeral=True, delete_after=settings.DELETE_AFTER)
     
 ### MMA ###
 @client.tree.command(name="mma", description="Submit MM for approval", guilds=[settings.GUILD_ID_DEV, settings.GUILD_ID_PROD])
 async def report(interaction: discord.Interaction):
     if not interaction.channel.name.lower().__contains__("-staff-chat"):
-        await interaction.response.send_message(f"_Please submit mms in staff chat model channel._", ephemeral=True)
+        await interaction.response.send_message(f"_Please submit mms in staff chat model channel._", ephemeral=True, delete_after=settings.DELETE_AFTER)
         return
     await interaction.response.send_modal(massmsg.MassMessageModal())
     
 ### CUSTOMS ###
-@client.tree.command(name="cs", description="Submit custom for approval", guilds=[settings.GUILD_ID_DEV, settings.GUILD_ID_PROD])
+@client.tree.command(name="cs", description="Submit custom for review", guilds=[settings.GUILD_ID_DEV, settings.GUILD_ID_PROD])
 async def report(interaction: discord.Interaction):
     if not interaction.channel.name.lower().__contains__("-customs"):
-        await interaction.response.send_message(f"_Please submit cs in customs model channel._", ephemeral=True)
+        await interaction.response.send_message(f"_Please submit cs in customs model channel._", ephemeral=True, delete_after=settings.DELETE_AFTER)
         return
     await interaction.response.send_modal(customs.CustomsModal())
+    
+### VOICE ###
+@client.tree.command(name="voice", description="Submit voice for review", guilds=[settings.GUILD_ID_DEV, settings.GUILD_ID_PROD])
+async def report(interaction: discord.Interaction):
+    if not interaction.channel.name.lower().__contains__("-staff-chat"):
+        await interaction.response.send_message(f"_Please submit voice in staff chat model channel._", ephemeral=True, delete_after=settings.DELETE_AFTER)
+        return
+    await interaction.response.send_modal(voice.VoiceModal())
+    
+### LEAKS ###
+@client.tree.command(name="leaks", description="Submit a leak", guilds=[settings.GUILD_ID_DEV, settings.GUILD_ID_PROD])
+async def report(interaction: discord.Interaction):
+    if not interaction.channel.name.lower().__contains__("-staff-chat"):
+        await interaction.response.send_message(f"_Please submit leak in staff chat model channel._", ephemeral=True, delete_after=settings.DELETE_AFTER)
+        return
+    await interaction.response.send_modal(leaks.LeakModal())
 
         
 #RUN BOT     

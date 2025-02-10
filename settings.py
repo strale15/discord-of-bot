@@ -16,12 +16,16 @@ COGS_DIR = BASE_DIR / "cogs"
 
 VIDEOCMDS_DIR = BASE_DIR / "videocmds"
 
+DELETE_AFTER = int(os.getenv("DELETE_AFTER"))
+
 #DEV
 GUILD_ID_INT_DEV = int(os.getenv("GUILD_ID_DEV"))
 GUILD_ID_DEV = discord.Object(id=GUILD_ID_INT_DEV)
 
 MMA_APPROVAL_ID_DEV = int(os.getenv("MMA_APPROVAL_ID_DEV"))
 CUSTOMS_QUEUE_ID_DEV = int(os.getenv("CUSTOMS_QUEUE_ID_DEV"))
+VOICE_QUEUE_ID_DEV = int(os.getenv("VOICE_QUEUE_ID_DEV"))
+LEAKS_QUEUE_ID_DEV = int(os.getenv("LEAKS_QUEUE_ID_DEV"))
 
 CONSULT_ID_DEV = int(os.getenv("CONSULT_ID_DEV"))
 SUPERVISOR_ID_DEV = int(os.getenv("SUPERVISOR_ID_DEV"))
@@ -33,6 +37,8 @@ GUILD_ID_PROD = discord.Object(id=GUILD_ID_INT_PROD)
 
 MMA_APPROVAL_ID_PROD = int(os.getenv("MMA_APPROVAL_ID_PROD"))
 CUSTOMS_QUEUE_ID_PROD = int(os.getenv("CUSTOMS_QUEUE_ID_PROD"))
+VOICE_QUEUE_ID_PROD = int(os.getenv("VOICE_QUEUE_ID_PROD"))
+LEAKS_QUEUE_ID_PROD = int(os.getenv("LEAKS_QUEUE_ID_PROD"))
 
 CONSULT_ID_PROD = int(os.getenv("CONSULT_ID_PROD"))
 SUPERVISOR_ID_PROD = int(os.getenv("SUPERVISOR_ID_PROD"))
