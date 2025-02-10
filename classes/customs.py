@@ -1,5 +1,6 @@
 import util
 import discord
+import settings
 
 class CustomsChangeModal(discord.ui.Modal, title="Comment on CS"):
     def __init__(self, ctx: discord.Interaction, requestChannel: discord.TextChannel, employee: discord.User, modelName: str, requestMsg: discord.Message, embed: discord.Embed):
@@ -31,7 +32,7 @@ class CustomsChangeModal(discord.ui.Modal, title="Comment on CS"):
         self.embed.add_field(name="Comment", value=self.comment.value, inline=False)
         
         await self.requestChannel.send(f"{self.employee.mention} your cs for **{self.modelName}** is commented by **{interaction.user.display_name}**\n_Commented cs:_", embed=self.embed)
-        await interaction.response.send_message(f"_Change requested_", ephemeral=True)
+        await interaction.response.send_message(f"_Change requested_", ephemeral=True, delete_after=settings.DELETE_AFTER)
         
 class CsView(discord.ui.View):
     def __init__(self, cs: discord.Message, requestChannel: discord.TextChannel, employee: discord.User, modelName: str, embed: discord.Embed):
@@ -119,6 +120,6 @@ class CustomsModal(discord.ui.Modal, title="Submit Custom"):
                 )
                 await message.edit(view=CsView(message, interaction.channel, interaction.user, interaction.channel.category.name, embed_message))
 
-            await interaction.response.send_message(f"{interaction.user.mention} Thank you for submitting your custom, it will be reviewed!", ephemeral=True)
+            await interaction.response.send_message(f"{interaction.user.mention} Thank you for submitting your custom, it will be reviewed!", ephemeral=True, delete_after=settings.DELETE_AFTER)
         except Exception as e:
-            await interaction.response.send_message(f"_Error submitting the custom, contact staff {e}_", ephemeral=True)
+            await interaction.response.send_message(f"_Error submitting the custom, contact staff {e}_", ephemeral=True, delete_after=settings.DELETE_AFTER)

@@ -1,5 +1,6 @@
 import util
 import discord
+import settings
 
 class MassMessageChangeModal(discord.ui.Modal, title="Comment on MM"):
     def __init__(self, ctx: discord.Interaction, requestChannel: discord.TextChannel, employee: discord.User, modelName: str, requestMsg: discord.Message, embed: discord.Embed):
@@ -47,7 +48,7 @@ class MassMessageChangeModal(discord.ui.Modal, title="Comment on MM"):
         
         
         await self.requestChannel.send(f"{self.employee.mention} your mm for **{self.modelName}** request change by **{interaction.user.display_name}**\n_Commented mm:_", embed=self.embed)
-        await interaction.response.send_message(f"_Change requested_", ephemeral=True)
+        await interaction.response.send_message(f"_Change requested_", ephemeral=True, delete_after=settings.DELETE_AFTER)
 
 class MmaView(discord.ui.View):
     def __init__(self, mm: discord.Message, requestChannel: discord.TextChannel, employee: discord.User, modelName: str, embed: discord.Embed):
@@ -65,7 +66,7 @@ class MmaView(discord.ui.View):
         self.embed.color = discord.Color.green()
         self.embed.remove_footer()
         await self.requestChannel.send(f"{self.employee.mention} your mm for **{self.modelName}** was approved by **{interaction.user.display_name}**\n_Approved mm request:_", embed=self.embed)
-        await interaction.response.send_message(f"_Approved the mm_", ephemeral=True)
+        await interaction.response.send_message(f"_Approved the mm_", ephemeral=True, delete_after=settings.DELETE_AFTER)
         
     @discord.ui.button(label="Request change", style=discord.ButtonStyle.blurple)
     async def requestChange(self, interaction: discord.Interaction, Button: discord.ui.Button):
@@ -78,9 +79,9 @@ class MmaView(discord.ui.View):
             self.embed.color = discord.Color.red()
             self.embed.remove_footer()
             await self.requestChannel.send(f"{self.employee.mention} your mm for **{self.modelName}** was rejected by **{interaction.user.display_name}**\n_Rejected mm request:_", embed=self.embed)
-            await interaction.response.send_message(f"_Rejected the mm_", ephemeral=True)
+            await interaction.response.send_message(f"_Rejected the mm_", ephemeral=True, delete_after=settings.DELETE_AFTER)
         except:
-            await interaction.response.send_message(f"_Rejected the mm but there was an error with sending the notification._", ephemeral=True)
+            await interaction.response.send_message(f"_Rejected the mm but there was an error with sending the notification._", ephemeral=True, delete_after=settings.DELETE_AFTER)
 
 class MassMessageModal(discord.ui.Modal, title="Submit MM"):
     def __init__(self):
@@ -120,6 +121,6 @@ class MassMessageModal(discord.ui.Modal, title="Submit MM"):
                 )
                 await message.edit(view=MmaView(message, interaction.channel, interaction.user, interaction.channel.category.name, embed_message))
 
-            await interaction.response.send_message(f"{interaction.user.mention} Thank you for submitting your mm, it will be reviewed!", ephemeral=True)
+            await interaction.response.send_message(f"{interaction.user.mention} Thank you for submitting your mm, it will be reviewed!", ephemeral=True, delete_after=settings.DELETE_AFTER)
         except Exception as e:
-            await interaction.response.send_message(f"_Error submitting the mm, contact staff {e}_", ephemeral=True)
+            await interaction.response.send_message(f"_Error submitting the mm, contact staff {e}_", ephemeral=True, delete_after=settings.DELETE_AFTER)
