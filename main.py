@@ -3,7 +3,7 @@ from discord.ext import commands
 from discord import HTTPException, app_commands
 
 import settings
-from classes import massmsg, customs, formats, voice
+from classes import massmsg, customs, formats, voice, leaks
 from util import *
 import util
 class MyClient(commands.Bot):
@@ -285,6 +285,14 @@ async def report(interaction: discord.Interaction):
         await interaction.response.send_message(f"_Please submit voice in staff chat model channel._", ephemeral=True, delete_after=settings.DELETE_AFTER)
         return
     await interaction.response.send_modal(voice.VoiceModal())
+    
+### LEAKS ###
+@client.tree.command(name="leaks", description="Submit a leak", guilds=[settings.GUILD_ID_DEV, settings.GUILD_ID_PROD])
+async def report(interaction: discord.Interaction):
+    if not interaction.channel.name.lower().__contains__("-staff-chat"):
+        await interaction.response.send_message(f"_Please submit leak in staff chat model channel._", ephemeral=True, delete_after=settings.DELETE_AFTER)
+        return
+    await interaction.response.send_modal(leaks.LeakModal())
 
         
 #RUN BOT     
