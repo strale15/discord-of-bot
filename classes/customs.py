@@ -32,7 +32,7 @@ class CustomsChangeModal(discord.ui.Modal, title="Comment on CS"):
         self.embed.add_field(name="Comment", value=self.comment.value, inline=False)
         
         await self.requestChannel.send(f"{self.employee.mention} your cs for **{self.modelName}** is commented by **{interaction.user.display_name}**\n_Commented cs:_", embed=self.embed)
-        await interaction.response.send_message(f"_Change requested_", ephemeral=True, delete_after=settings.DELETE_AFTER)
+        await interaction.response.send_message(f"_Commend added_", ephemeral=True, delete_after=settings.DELETE_AFTER)
         
 class CsView(discord.ui.View):
     def __init__(self, cs: discord.Message, requestChannel: discord.TextChannel, employee: discord.User, modelName: str, embed: discord.Embed):
