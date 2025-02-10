@@ -18,7 +18,7 @@ def getClockedInUsernames(channelName: str) -> list:
         return None
     
     allUsers = channelName.split('-')[1].strip()
-    usernames = allUsers.split('+')
+    usernames = allUsers.split(',')
     return [username.strip() for username in usernames]
 
 def getBaseChannelName(channelName: str) -> str:

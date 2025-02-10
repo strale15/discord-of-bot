@@ -1,6 +1,6 @@
 import discord
 from discord.ext import commands
-from discord import app_commands
+from discord import HTTPException, app_commands
 
 import settings
 from classes import massmsg, customs, formats
@@ -23,7 +23,7 @@ log = settings.logging.getLogger()
 intents = discord.Intents.default()
 intents.message_content = True
 
-client = MyClient(command_prefix="!", intents=intents)
+client = MyClient(command_prefix="!", intents=intents, max_ratelimit_timeout=90)
 
 ###---------------- COMMANDS ----------------###
             
@@ -83,7 +83,7 @@ async def setupClockInChannel(interaction: discord.Interaction):
                 }
     
     try:
-        createdChannel = await interaction.guild.create_voice_channel("❌" + modelName + " - ", category=clockInCategory, overwrites=overwrites)
+        createdChannel = await interaction.guild.create_voice_channel("❌" + modelName + " -", category=clockInCategory, overwrites=overwrites)
         await interaction.response.send_message(f"_Successfully created {createdChannel.name} vc!_", ephemeral=True)
     except Exception as e:
         await interaction.response.send_message(f"_Channel creation failed {e}_", ephemeral=True)
@@ -177,7 +177,7 @@ async def executeCommand(interaction: discord.Interaction, role_name: str):
         
 #Clock in command
 @client.tree.command(name="ci", description="Clocks you in. Use in model text channel to clock in for that model.", guilds=[settings.GUILD_ID_DEV, settings.GUILD_ID_PROD])
-async def executeCommand(interaction: discord.Interaction):
+async def clockCommand(interaction: discord.Interaction):
     if interaction.channel.category is None:
         await interaction.response.send_message(f"_Wrong channel, use one of the model text channels._")
         return
@@ -189,11 +189,11 @@ async def executeCommand(interaction: discord.Interaction):
     for channel in clockInCategory.channels:
         if isinstance(channel, discord.VoiceChannel) and channel.name.lower().__contains__(modelName):
             if channel.name.__contains__(username):
-                await interaction.response.send_message(f"_You are already clocked in._")
+                await interaction.response.send_message(f"_You are already clocked in._", ephemeral=True)
                 return
             
             if channel.name[-1] != '-':
-                await channel.edit(name=channel.name + "+" + username)
+                await channel.edit(name=channel.name + ", " + username)
             else:
                 await channel.edit(name="✅" + channel.name[1:] + " " + username)
                 
@@ -204,7 +204,7 @@ async def executeCommand(interaction: discord.Interaction):
     
 #Clock out command
 @client.tree.command(name="co", description="Clocks you out. Use in model text channel to clock out for that model.", guilds=[settings.GUILD_ID_DEV, settings.GUILD_ID_PROD])
-async def executeCommand(interaction: discord.Interaction):
+async def clockCommand(interaction: discord.Interaction):
     modelName = interaction.channel.category.name.lower()
     clockInCategory = getCategoryByName(interaction.guild, 'clock in')
     username = interaction.user.display_name
@@ -219,13 +219,18 @@ async def executeCommand(interaction: discord.Interaction):
                 if len(usernames) == 0:
                     newChannelName = "❌" + getBaseChannelName(channel.name)[1:] + " -"
                 else:
-                    newChannelName = getBaseChannelName(channel.name) + " - " + '+'.join(usernames)
+                    newChannelName = getBaseChannelName(channel.name) + " - " + ', '.join(usernames)
                     
-                await channel.edit(name=newChannelName)
-                await interaction.response.send_message(f"_You are now clocked out._", ephemeral=True)
-                return
+            await channel.edit(name=newChannelName)
+            await interaction.response.send_message("_You are now clocked out._", ephemeral=True)
+            return
             
     await interaction.response.send_message(f"_You are not clocked in on any model._", ephemeral=True)
+    
+@clockCommand.error
+async def on_clock_command_error(interaction: discord.Interaction, error: discord.app_commands.AppCommandError) -> None:
+    if str(error).__contains__("RateLimited"):
+        await interaction.response.send_message("_Please wait at least **10** minutes before clocking out!_", ephemeral=True)
     
 ### MMA ###
 @client.tree.command(name="mma", description="Submit MM for approval", guilds=[settings.GUILD_ID_DEV, settings.GUILD_ID_PROD])
