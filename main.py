@@ -177,7 +177,7 @@ async def executeCommand(interaction: discord.Interaction, role_name: str):
         
 #Clock in command
 @client.tree.command(name="ci", description="Clocks you in. Use in model text channel to clock in for that model.", guilds=[settings.GUILD_ID_DEV, settings.GUILD_ID_PROD])
-async def clockCommand(interaction: discord.Interaction):
+async def ciCommand(interaction: discord.Interaction):
     if interaction.channel.category is None:
         await interaction.response.send_message(f"_Wrong channel, use one of the model text channels._")
         return
@@ -193,18 +193,24 @@ async def clockCommand(interaction: discord.Interaction):
                 return
             
             if channel.name[-1] != '-':
-                await channel.edit(name=channel.name + ", " + username)
+                newChannelName = channel.name + ", " + username
             else:
-                await channel.edit(name="✅" + channel.name[1:] + " " + username)
-                
+                newChannelName = "✅" + channel.name[1:] + " " + username
+              
+            await channel.edit(name=newChannelName)  
             await interaction.response.send_message(f"You are now clocked in! Good luck soldier 🫡", ephemeral=True)
             return
         
     await interaction.response.send_message(f"_Model is missing the voice channel, please create one using /setup._", ephemeral=True)
     
+@ciCommand.error
+async def on_clock_command_error(interaction: discord.Interaction, error: discord.app_commands.AppCommandError) -> None:
+    if str(error).__contains__("RateLimited"):
+        await interaction.response.send_message("_Please wait at least **10** minutes before clocking in!_", ephemeral=True)
+    
 #Clock out command
 @client.tree.command(name="co", description="Clocks you out. Use in model text channel to clock out for that model.", guilds=[settings.GUILD_ID_DEV, settings.GUILD_ID_PROD])
-async def clockCommand(interaction: discord.Interaction):
+async def coCommand(interaction: discord.Interaction):
     modelName = interaction.channel.category.name.lower()
     clockInCategory = getCategoryByName(interaction.guild, 'clock in')
     username = interaction.user.display_name
@@ -221,16 +227,38 @@ async def clockCommand(interaction: discord.Interaction):
                 else:
                     newChannelName = getBaseChannelName(channel.name) + " - " + ', '.join(usernames)
                     
-            await channel.edit(name=newChannelName)
-            await interaction.response.send_message("_You are now clocked out._", ephemeral=True)
-            return
+                await channel.edit(name=newChannelName)
+                await interaction.response.send_message("_You are now clocked out._", ephemeral=True)
+                return
             
     await interaction.response.send_message(f"_You are not clocked in on any model._", ephemeral=True)
     
-@clockCommand.error
+@coCommand.error
 async def on_clock_command_error(interaction: discord.Interaction, error: discord.app_commands.AppCommandError) -> None:
     if str(error).__contains__("RateLimited"):
         await interaction.response.send_message("_Please wait at least **10** minutes before clocking out!_", ephemeral=True)
+        
+#Clock out everyone
+@app_commands.checks.has_permissions(manage_channels=True)
+@app_commands.default_permissions(manage_channels=True)
+@client.tree.command(name="co-all", description="Clocks everyone from vc. Use in model text channel to clock everyone out for that model.", guilds=[settings.GUILD_ID_DEV, settings.GUILD_ID_PROD])
+async def coallCommand(interaction: discord.Interaction):
+    modelName = interaction.channel.category.name.lower()
+    clockInCategory = getCategoryByName(interaction.guild, 'clock in')
+    
+    for channel in clockInCategory.channels:
+        if isinstance(channel, discord.VoiceChannel) and channel.name.lower().__contains__(modelName):
+            newChannelName = "❌" + getBaseChannelName(channel.name)[1:] + " -"
+            await channel.edit(name=newChannelName)
+            await interaction.response.send_message(f"_Everyone is now clocked out from {modelName}._", ephemeral=True)
+            return
+                          
+    await interaction.response.send_message(f"_Error occurred._", ephemeral=True)
+    
+@coallCommand.error
+async def on_clock_command_error(interaction: discord.Interaction, error: discord.app_commands.AppCommandError) -> None:
+    if str(error).__contains__("RateLimited"):
+        await interaction.response.send_message("_Please wait at least **10** minutes before clocking everyone out!_", ephemeral=True)
     
 ### MMA ###
 @client.tree.command(name="mma", description="Submit MM for approval", guilds=[settings.GUILD_ID_DEV, settings.GUILD_ID_PROD])
