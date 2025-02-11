@@ -1,9 +1,10 @@
+from email.mime import message
 import discord
 from discord.ext import commands
 from discord import HTTPException, app_commands
 
 import settings
-from classes import massmsg, customs, formats, voice, leaks
+from classes import massmsg, customs, formats, voice, leaks, sheets
 from util import *
 import util
 class MyClient(commands.Bot):
@@ -293,6 +294,37 @@ async def report(interaction: discord.Interaction):
         await interaction.response.send_message(f"_Please submit leak in staff chat model channel._", ephemeral=True, delete_after=settings.DELETE_AFTER)
         return
     await interaction.response.send_modal(leaks.LeakModal())
+    
+### FINES ###
+@client.tree.command(name="my-fines", description="Shows the list of you fines", guilds=[settings.GUILD_ID_DEV, settings.GUILD_ID_PROD])
+async def report(interaction: discord.Interaction):
+    if not interaction.channel.name.lower().__contains__("fines"):
+        await interaction.response.send_message(f"_Please use the command in the fines channel_", ephemeral=True, delete_after=settings.DELETE_AFTER)
+        return
+    
+    fines = sheets.getUserFines(interaction.user.name)
+    message = "_You don't have any fines (yet 🙂)!_"
+    deleteAfter = settings.DELETE_AFTER
+    if fines != "":
+        message = fines
+        deleteAfter = 300
+    await interaction.response.send_message(f"{message}", ephemeral=True, delete_after=deleteAfter)
+
+@app_commands.checks.has_permissions(manage_channels=True)
+@app_commands.default_permissions(manage_channels=True)
+@client.tree.command(name="fines", description="Shows the list of fines for given user, provide discord nick", guilds=[settings.GUILD_ID_DEV, settings.GUILD_ID_PROD])
+async def report(interaction: discord.Interaction, username: str):
+    if not interaction.channel.name.lower().__contains__("fines"):
+        await interaction.response.send_message(f"_Please use the command in the fines channel_", ephemeral=True, delete_after=settings.DELETE_AFTER)
+        return
+    
+    fines = sheets.getUserFines(username)
+    message = "_That user doesn't have any fines (yet 🙂)!_"
+    deleteAfter = settings.DELETE_AFTER
+    if fines != "":
+        message = fines
+        deleteAfter = 300
+    await interaction.response.send_message(f"{message}", ephemeral=True, delete_after=deleteAfter)
 
         
 #RUN BOT     
