@@ -2,6 +2,7 @@ from email.mime import message
 import discord
 from discord.ext import commands
 from discord import HTTPException, app_commands
+import asyncio
 
 import settings
 from classes import massmsg, customs, formats, voice, leaks, sheets
@@ -101,9 +102,10 @@ async def executeCommand(interaction: discord.Interaction, model_name: str):
         await interaction.response.send_message(f"_{model_name} category is already setup!_", ephemeral=True, delete_after=settings.DELETE_AFTER)
         return
     
-    modelRole = getRoleByName(interaction.guild, model_name)
+    roleName = f"Team {model_name}"
+    modelRole = getRoleByName(interaction.guild, roleName)
     if modelRole is None:
-        modelRole = await interaction.guild.create_role(name=model_name, color=discord.Colour.magenta())
+        modelRole = await interaction.guild.create_role(name=roleName, color=discord.Colour.magenta())
         
     ppvRole = util.getPPVEngRole(interaction)
     supervisorRole = util.getSupervisorRole(interaction)
@@ -117,9 +119,12 @@ async def executeCommand(interaction: discord.Interaction, model_name: str):
     
     try:
         createdCategory = await interaction.guild.create_category(model_name, overwrites=overwrites)
-        await interaction.guild.create_text_channel("💬-staff-chat", category=createdCategory)
-        await interaction.guild.create_text_channel("📰-info", category=createdCategory)
-        await interaction.guild.create_text_channel("📷-customs", category=createdCategory)
+        await asyncio.sleep(0.1)
+        await interaction.guild.create_text_channel(f"💬-{model_name}-staff-chat", category=createdCategory)
+        await asyncio.sleep(0.1)
+        await interaction.guild.create_text_channel(f"📰-{model_name}-info", category=createdCategory)
+        await asyncio.sleep(0.1)
+        await interaction.guild.create_text_channel(f"📷-{model_name}-customs", category=createdCategory)
         await interaction.response.send_message(f"_Successfully created {model_name} model space, you can now use /setup in staff chat to create clock in vc!_", ephemeral=True, delete_after=settings.DELETE_AFTER)
     except Exception as e:
         await interaction.response.send_message(f"_Channel creation failed {e}_", ephemeral=True, delete_after=settings.DELETE_AFTER)
@@ -327,7 +332,7 @@ async def report(interaction: discord.Interaction, username: str):
     await interaction.response.send_message(f"{message}", ephemeral=True, delete_after=deleteAfter)
 
         
-#RUN BOT     
+#RUN BOT
 if __name__ == "__main__":
     #Run client
     client.run(settings.DISCORD_API_SECRET, root_logger=True)
