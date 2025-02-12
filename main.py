@@ -376,6 +376,15 @@ async def report(interaction: discord.Interaction, username: str):
 @app_commands.default_permissions(manage_channels=True)
 @client.tree.command(name="add-referral", description="Adds the referral to employee. Please provide employee discord nick and referral discord nick.", guilds=[settings.GUILD_ID_DEV, settings.GUILD_ID_PROD])
 async def addReferral(interaction: discord.Interaction, employee_nick: str, referral_nick: str):
+    managementRole = util.getManagementRole(interaction)
+    consultantRole = util.getConsultRole(interaction)
+    
+    userRole1 = interaction.user.get_role(managementRole.id)
+    userRole2 = interaction.user.get_role(consultantRole.id)
+    if userRole1 == None and userRole2 == None:
+        await interaction.response.send_message(f"_You do not have a required role for this action._", ephemeral=True, delete_after=settings.DELETE_AFTER)
+        return
+    
     message = "_Problem adding a referral, please check the sheets._"
     if sheets.addReferral(employee_nick, referral_nick):
         message = f"_Added {referral_nick} successfully as a referral to {employee_nick}_"
