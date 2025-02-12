@@ -5,7 +5,7 @@ from discord import HTTPException, app_commands
 import asyncio
 
 import settings
-from classes import massmsg, customs, formats, voice, leaks, sheets
+from classes import massmsg, customs, formats, voice, leaks, sheets, fine
 from util import *
 import util
 class MyClient(commands.Bot):
@@ -22,7 +22,7 @@ class MyClient(commands.Bot):
 #SETUP BOT
 log = settings.logging.getLogger()
     
-intents = discord.Intents.default()
+intents = discord.Intents.all()
 intents.message_content = True
 
 client = MyClient(command_prefix="!", intents=intents, max_ratelimit_timeout=90)
@@ -330,6 +330,21 @@ async def report(interaction: discord.Interaction, username: str):
         message = fines
         deleteAfter = 300
     await interaction.response.send_message(f"{message}", ephemeral=True, delete_after=deleteAfter)
+   
+@app_commands.checks.has_permissions(manage_channels=True)
+@app_commands.default_permissions(manage_channels=True) 
+@client.tree.command(name="fine", description="Opens a form to fine a user", guilds=[settings.GUILD_ID_DEV, settings.GUILD_ID_PROD])
+async def report(interaction: discord.Interaction):
+    fineRole = util.getFineRole(interaction)
+    userRole = interaction.user.get_role(fineRole.id)
+    if userRole == None:
+        await interaction.response.send_message(f"_You do not have a **FINE** role._", ephemeral=True, delete_after=settings.DELETE_AFTER)
+        return
+    
+    if not interaction.channel.name.lower().__contains__("fines"):
+        await interaction.response.send_message(f"_Please use the command in the fines channel._", ephemeral=True, delete_after=settings.DELETE_AFTER)
+        return
+    await interaction.response.send_modal(fine.FineModal())
 
         
 #RUN BOT
