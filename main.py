@@ -346,6 +346,38 @@ async def report(interaction: discord.Interaction):
         return
     await interaction.response.send_modal(fine.FineModal())
 
+### FINES ###
+@client.tree.command(name="my-referrals", description="Shows the list of you referrals", guilds=[settings.GUILD_ID_DEV, settings.GUILD_ID_PROD])
+async def report(interaction: discord.Interaction):
+    referrals = sheets.getUserReferrals(interaction.user.name)
+    message = "_You don't have any referrals._"
+    deleteAfter = settings.DELETE_AFTER
+    if referrals != "":
+        message = referrals
+        deleteAfter = 300
+    await interaction.response.send_message(f"{message}", ephemeral=True, delete_after=deleteAfter)
+    
+@app_commands.checks.has_permissions(manage_channels=True)
+@app_commands.default_permissions(manage_channels=True)
+@client.tree.command(name="referrals", description="Shows the list of referrals for given user, provide discord nick", guilds=[settings.GUILD_ID_DEV, settings.GUILD_ID_PROD])
+async def report(interaction: discord.Interaction, username: str):
+    referrals = sheets.getUserReferrals(username)
+    message = "_That user doesn't have any referrals._"
+    deleteAfter = settings.DELETE_AFTER
+    if referrals != "":
+        message = referrals
+        deleteAfter = 300
+    await interaction.response.send_message(f"{message}", ephemeral=True, delete_after=deleteAfter)
+    
+@app_commands.checks.has_permissions(manage_channels=True)
+@app_commands.default_permissions(manage_channels=True)
+@client.tree.command(name="add-referral", description="Adds the referral to employee. Please provide employee discord nick and referral discord nick.", guilds=[settings.GUILD_ID_DEV, settings.GUILD_ID_PROD])
+async def addReferral(interaction: discord.Interaction, employee_nick: str, referral_nick: str):
+    message = "_Problem adding a referral, please check the sheets._"
+    if sheets.addReferral(employee_nick, referral_nick):
+        message = f"_Added {referral_nick} successfully as a referral to {employee_nick}_"
+    await interaction.response.send_message(f"{message}", ephemeral=True, delete_after=settings.DELETE_AFTER)
+        
         
 #RUN BOT
 if __name__ == "__main__":
