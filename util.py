@@ -9,7 +9,7 @@ def getCategoryByName(guild: discord.Guild, categoryName: str) -> discord.Catego
 
 def getRoleByName(guild: discord.Guild, name: str) -> discord.Role:
     for role in guild.roles:
-        if role.name.lower() == name.lower():
+        if role.name.lower().__contains__(name.lower()):
             return role
     return None
 
