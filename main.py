@@ -1,9 +1,11 @@
+from email.mime import message
 import discord
 from discord.ext import commands
 from discord import HTTPException, app_commands
+import asyncio
 
 import settings
-from classes import massmsg, customs, formats, voice, leaks
+from classes import massmsg, customs, formats, voice, leaks, sheets, fine
 from util import *
 import util
 class MyClient(commands.Bot):
@@ -20,7 +22,7 @@ class MyClient(commands.Bot):
 #SETUP BOT
 log = settings.logging.getLogger()
     
-intents = discord.Intents.default()
+intents = discord.Intents.all()
 intents.message_content = True
 
 client = MyClient(command_prefix="!", intents=intents, max_ratelimit_timeout=90)
@@ -100,9 +102,10 @@ async def executeCommand(interaction: discord.Interaction, model_name: str):
         await interaction.response.send_message(f"_{model_name} category is already setup!_", ephemeral=True, delete_after=settings.DELETE_AFTER)
         return
     
-    modelRole = getRoleByName(interaction.guild, model_name)
+    roleName = f"Team {model_name}"
+    modelRole = getRoleByName(interaction.guild, roleName)
     if modelRole is None:
-        modelRole = await interaction.guild.create_role(name=model_name, color=discord.Colour.magenta())
+        modelRole = await interaction.guild.create_role(name=roleName, color=discord.Colour.magenta())
         
     ppvRole = util.getPPVEngRole(interaction)
     supervisorRole = util.getSupervisorRole(interaction)
@@ -116,9 +119,12 @@ async def executeCommand(interaction: discord.Interaction, model_name: str):
     
     try:
         createdCategory = await interaction.guild.create_category(model_name, overwrites=overwrites)
-        await interaction.guild.create_text_channel("💬-staff-chat", category=createdCategory)
-        await interaction.guild.create_text_channel("📰-info", category=createdCategory)
-        await interaction.guild.create_text_channel("📷-customs", category=createdCategory)
+        await asyncio.sleep(0.1)
+        await interaction.guild.create_text_channel(f"💬-{model_name}-staff-chat", category=createdCategory)
+        await asyncio.sleep(0.1)
+        await interaction.guild.create_text_channel(f"📰-{model_name}-info", category=createdCategory)
+        await asyncio.sleep(0.1)
+        await interaction.guild.create_text_channel(f"📷-{model_name}-customs", category=createdCategory)
         await interaction.response.send_message(f"_Successfully created {model_name} model space, you can now use /setup in staff chat to create clock in vc!_", ephemeral=True, delete_after=settings.DELETE_AFTER)
     except Exception as e:
         await interaction.response.send_message(f"_Channel creation failed {e}_", ephemeral=True, delete_after=settings.DELETE_AFTER)
@@ -293,9 +299,87 @@ async def report(interaction: discord.Interaction):
         await interaction.response.send_message(f"_Please submit leak in staff chat model channel._", ephemeral=True, delete_after=settings.DELETE_AFTER)
         return
     await interaction.response.send_modal(leaks.LeakModal())
+    
+### FINES ###
+@client.tree.command(name="my-fines", description="Shows the list of you fines", guilds=[settings.GUILD_ID_DEV, settings.GUILD_ID_PROD])
+async def report(interaction: discord.Interaction):
+    if not interaction.channel.name.lower().__contains__("fines"):
+        await interaction.response.send_message(f"_Please use the command in the fines channel_", ephemeral=True, delete_after=settings.DELETE_AFTER)
+        return
+    
+    fines = sheets.getUserFines(interaction.user.name)
+    message = "_You don't have any fines (yet 🙂)!_"
+    deleteAfter = settings.DELETE_AFTER
+    if fines != "":
+        message = fines
+        deleteAfter = 300
+    await interaction.response.send_message(f"{message}", ephemeral=True, delete_after=deleteAfter)
 
+@app_commands.checks.has_permissions(manage_channels=True)
+@app_commands.default_permissions(manage_channels=True)
+@client.tree.command(name="fines", description="Shows the list of fines for given user, provide discord nick", guilds=[settings.GUILD_ID_DEV, settings.GUILD_ID_PROD])
+async def report(interaction: discord.Interaction, username: str):
+    if not interaction.channel.name.lower().__contains__("fines"):
+        await interaction.response.send_message(f"_Please use the command in the fines channel_", ephemeral=True, delete_after=settings.DELETE_AFTER)
+        return
+    
+    fines = sheets.getUserFines(username)
+    message = "_That user doesn't have any fines (yet 🙂)!_"
+    deleteAfter = settings.DELETE_AFTER
+    if fines != "":
+        message = fines
+        deleteAfter = 300
+    await interaction.response.send_message(f"{message}", ephemeral=True, delete_after=deleteAfter)
+   
+@app_commands.checks.has_permissions(manage_channels=True)
+@app_commands.default_permissions(manage_channels=True) 
+@client.tree.command(name="fine", description="Opens a form to fine a user", guilds=[settings.GUILD_ID_DEV, settings.GUILD_ID_PROD])
+async def report(interaction: discord.Interaction):
+    fineRole = util.getFineRole(interaction)
+    userRole = interaction.user.get_role(fineRole.id)
+    if userRole == None:
+        await interaction.response.send_message(f"_You do not have a **FINE** role._", ephemeral=True, delete_after=settings.DELETE_AFTER)
+        return
+    
+    if not interaction.channel.name.lower().__contains__("fines"):
+        await interaction.response.send_message(f"_Please use the command in the fines channel._", ephemeral=True, delete_after=settings.DELETE_AFTER)
+        return
+    await interaction.response.send_modal(fine.FineModal())
+
+### FINES ###
+@client.tree.command(name="my-referrals", description="Shows the list of you referrals", guilds=[settings.GUILD_ID_DEV, settings.GUILD_ID_PROD])
+async def report(interaction: discord.Interaction):
+    referrals = sheets.getUserReferrals(interaction.user.name)
+    message = "_You don't have any referrals._"
+    deleteAfter = settings.DELETE_AFTER
+    if referrals != "":
+        message = referrals
+        deleteAfter = 300
+    await interaction.response.send_message(f"{message}", ephemeral=True, delete_after=deleteAfter)
+    
+@app_commands.checks.has_permissions(manage_channels=True)
+@app_commands.default_permissions(manage_channels=True)
+@client.tree.command(name="referrals", description="Shows the list of referrals for given user, provide discord nick", guilds=[settings.GUILD_ID_DEV, settings.GUILD_ID_PROD])
+async def report(interaction: discord.Interaction, username: str):
+    referrals = sheets.getUserReferrals(username)
+    message = "_That user doesn't have any referrals._"
+    deleteAfter = settings.DELETE_AFTER
+    if referrals != "":
+        message = referrals
+        deleteAfter = 300
+    await interaction.response.send_message(f"{message}", ephemeral=True, delete_after=deleteAfter)
+    
+@app_commands.checks.has_permissions(manage_channels=True)
+@app_commands.default_permissions(manage_channels=True)
+@client.tree.command(name="add-referral", description="Adds the referral to employee. Please provide employee discord nick and referral discord nick.", guilds=[settings.GUILD_ID_DEV, settings.GUILD_ID_PROD])
+async def addReferral(interaction: discord.Interaction, employee_nick: str, referral_nick: str):
+    message = "_Problem adding a referral, please check the sheets._"
+    if sheets.addReferral(employee_nick, referral_nick):
+        message = f"_Added {referral_nick} successfully as a referral to {employee_nick}_"
+    await interaction.response.send_message(f"{message}", ephemeral=True, delete_after=settings.DELETE_AFTER)
         
-#RUN BOT     
+        
+#RUN BOT
 if __name__ == "__main__":
     #Run client
     client.run(settings.DISCORD_API_SECRET, root_logger=True)
