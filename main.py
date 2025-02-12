@@ -335,10 +335,13 @@ async def report(interaction: discord.Interaction, username: str):
 @app_commands.default_permissions(manage_channels=True) 
 @client.tree.command(name="fine", description="Opens a form to fine a user", guilds=[settings.GUILD_ID_DEV, settings.GUILD_ID_PROD])
 async def report(interaction: discord.Interaction):
-    fineRole = util.getFineRole(interaction)
-    userRole = interaction.user.get_role(fineRole.id)
-    if userRole == None:
-        await interaction.response.send_message(f"_You do not have a **FINE** role._", ephemeral=True, delete_after=settings.DELETE_AFTER)
+    managementRole = util.getManagementRole(interaction)
+    consultantRole = util.getConsultRole(interaction)
+    
+    userRole1 = interaction.user.get_role(managementRole.id)
+    userRole2 = interaction.user.get_role(consultantRole.id)
+    if userRole1 == None and userRole2 == None:
+        await interaction.response.send_message(f"_You do not have a required role for this action._", ephemeral=True, delete_after=settings.DELETE_AFTER)
         return
     
     if not interaction.channel.name.lower().__contains__("fines"):

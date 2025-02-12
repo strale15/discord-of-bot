@@ -33,7 +33,7 @@ FINES_CHANNEL_ID_DEV = int(os.getenv("FINES_CHANNEL_ID_DEV"))
 CONSULT_ID_DEV = int(os.getenv("CONSULT_ID_DEV"))
 SUPERVISOR_ID_DEV = int(os.getenv("SUPERVISOR_ID_DEV"))
 PPV_ENG_ID_DEV = int(os.getenv("PPV_ENG_ID_DEV"))
-FINE_ROLE_ID_DEV = int(os.getenv("FINE_ROLE_ID_DEV"))
+MANAGEMENT_ROLE_ID_DEV = int(os.getenv("MANAGEMENT_ROLE_ID_DEV"))
 
 #PROD
 GUILD_ID_INT_PROD = int(os.getenv("GUILD_ID_PROD"))
@@ -48,7 +48,7 @@ FINES_CHANNEL_ID_PROD = int(os.getenv("FINES_CHANNEL_ID_PROD"))
 CONSULT_ID_PROD = int(os.getenv("CONSULT_ID_PROD"))
 SUPERVISOR_ID_PROD = int(os.getenv("SUPERVISOR_ID_PROD"))
 PPV_ENG_ID_PROD = int(os.getenv("PPV_ENG_ID_PROD"))
-FINE_ROLE_ID_PROD = int(os.getenv("FINE_ROLE_ID_PROD"))
+MANAGEMENT_ROLE_ID_PROD = int(os.getenv("MANAGEMENT_ROLE_ID_PROD"))
 
 LOGGING_CONFIG = {
     "version": 1,
