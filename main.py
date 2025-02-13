@@ -181,11 +181,16 @@ async def executeCommand(interaction: discord.Interaction, role_name: str):
     await modelRole.delete()
     await interaction.response.send_message(f"_{role_name} deleted!_ 🚮", ephemeral=True, delete_after=settings.DELETE_AFTER)
         
-#Clock in command
-@client.tree.command(name="ci", description="Clocks you in. Use in model text channel to clock in for that model.", guilds=[settings.GUILD_ID_DEV, settings.GUILD_ID_PROD])
+@client.tree.command(
+    name="ci", 
+    description="Clocks you in. Use in model text channel to clock in for that model.", 
+    guilds=[settings.GUILD_ID_DEV, settings.GUILD_ID_PROD]
+)
 async def ciCommand(interaction: discord.Interaction):
+    await interaction.response.defer(ephemeral=False)  # Prevents interaction expiration
+
     if interaction.channel.category is None:
-        await interaction.response.send_message(f"_Wrong channel, use one of the model text channels._")
+        await interaction.followup.send(f"_Wrong channel, use one of the model text channels._")
         return
     
     modelName = interaction.channel.category.name.lower()
@@ -193,17 +198,14 @@ async def ciCommand(interaction: discord.Interaction):
     username = interaction.user.display_name
     
     for channel in clockInCategory.channels:
-        if isinstance(channel, discord.VoiceChannel) and channel.name.lower().__contains__(modelName):
-            if channel.name.__contains__(username):
-                await interaction.response.send_message(f"_You are already clocked in._", ephemeral=True, delete_after=settings.DELETE_AFTER)
+        if isinstance(channel, discord.VoiceChannel) and modelName in channel.name.lower():
+            if username in channel.name:
+                await interaction.followup.send(f"_You are already clocked in._", ephemeral=True, delete_after=settings.DELETE_AFTER)
                 return
             
-            if channel.name[-1] != '-':
-                newChannelName = channel.name + ", " + username
-            else:
-                newChannelName = "✅" + channel.name[1:] + " " + username
-              
-            await channel.edit(name=newChannelName)  
+            newChannelName = f"{channel.name}, {username}" if channel.name[-1] != '-' else f"✅{channel.name[1:]} {username}"
+            await channel.edit(name=newChannelName)
+
             try:
                 with open("clocklog.txt", "a") as file:
                     now = datetime.datetime.now()
@@ -211,19 +213,25 @@ async def ciCommand(interaction: discord.Interaction):
                     file.write(f"CI [{datetime_string}] - username: {interaction.user.name} - model: {modelName}\n")
             except:
                 log.warning("Error logging ci to file")
-            await interaction.response.send_message(f"You are now clocked in _{modelName}_.", ephemeral=False)
+
+            await interaction.followup.send(f"You are now clocked in _{modelName}_.")
             return
         
-    await interaction.response.send_message(f"_Model is missing the voice channel, please create one using /setup._", ephemeral=True, delete_after=settings.DELETE_AFTER)
+    await interaction.followup.send(f"_Model is missing the voice channel, please create one using /setup._", delete_after=settings.DELETE_AFTER)
     
 @ciCommand.error
 async def on_clock_command_error(interaction: discord.Interaction, error: discord.app_commands.AppCommandError) -> None:
     if str(error).__contains__("RateLimited"):
         await interaction.response.send_message("_Please wait at least **10** minutes before clocking in!_", ephemeral=True, delete_after=settings.DELETE_AFTER)
     
-#Clock out command
-@client.tree.command(name="co", description="Clocks you out. Use in model text channel to clock out for that model.", guilds=[settings.GUILD_ID_DEV, settings.GUILD_ID_PROD])
+@client.tree.command(
+    name="co", 
+    description="Clocks you out. Use in model text channel to clock out for that model.", 
+    guilds=[settings.GUILD_ID_DEV, settings.GUILD_ID_PROD]
+)
 async def coCommand(interaction: discord.Interaction):
+    await interaction.response.defer(ephemeral=False)  # Prevents interaction expiration
+
     modelName = interaction.channel.category.name.lower()
     clockInCategory = getCategoryByName(interaction.guild, 'clock in')
     username = interaction.user.display_name
@@ -231,7 +239,7 @@ async def coCommand(interaction: discord.Interaction):
     for channel in clockInCategory.channels:
         if isinstance(channel, discord.VoiceChannel) and channel.name.lower().__contains__(modelName):
             if channel.name.__contains__(username):
-                #remove username from channel.name string
+                # Remove username from channel name
                 usernames = getClockedInUsernames(channel.name)
                 usernames.remove(username)
                 
@@ -248,10 +256,11 @@ async def coCommand(interaction: discord.Interaction):
                         file.write(f"CO [{datetime_string}] - username: {interaction.user.name} - model: {modelName}\n")
                 except:
                     log.warning("Error logging co to file")
-                await interaction.response.send_message(f"You are now clocked out of _{modelName}_.", ephemeral=False)
+                
+                await interaction.followup.send(f"You are now clocked out of _{modelName}_.")
                 return
             
-    await interaction.response.send_message(f"_You are not clocked in on any model._", ephemeral=True, delete_after=settings.DELETE_AFTER)
+    await interaction.followup.send(f"_You are not clocked in on any model._", delete_after=settings.DELETE_AFTER)
     
 @coCommand.error
 async def on_clock_command_error(interaction: discord.Interaction, error: discord.app_commands.AppCommandError) -> None:
@@ -386,22 +395,29 @@ async def report(interaction: discord.Interaction, username: str):
     
 @app_commands.checks.has_permissions(manage_channels=True)
 @app_commands.default_permissions(manage_channels=True)
-@client.tree.command(name="add-referral", description="Adds the referral to employee. Please provide employee discord nick and referral discord nick.", guilds=[settings.GUILD_ID_DEV, settings.GUILD_ID_PROD])
+@client.tree.command(
+    name="add-referral", 
+    description="Adds the referral to employee. Please provide employee discord nick and referral discord nick.", 
+    guilds=[settings.GUILD_ID_DEV, settings.GUILD_ID_PROD]
+)
 async def addReferral(interaction: discord.Interaction, employee_nick: str, referral_nick: str):
+    await interaction.response.defer(ephemeral=True)  # Prevents interaction expiration
+    
     managementRole = util.getManagementRole(interaction)
     consultantRole = util.getConsultRole(interaction)
     
     userRole1 = interaction.user.get_role(managementRole.id)
     userRole2 = interaction.user.get_role(consultantRole.id)
-    if userRole1 == None and userRole2 == None:
-        await interaction.response.send_message(f"_You do not have a required role for this action._", ephemeral=True, delete_after=settings.DELETE_AFTER)
+    
+    if userRole1 is None and userRole2 is None:
+        await interaction.followup.send("_You do not have a required role for this action._", delete_after=settings.DELETE_AFTER)
         return
     
     message = "_Problem adding a referral, please check the sheets._"
     if sheets.addReferral(employee_nick, referral_nick):
         message = f"_Added {referral_nick} successfully as a referral to {employee_nick}_"
-    await interaction.response.send_message(f"{message}", ephemeral=True, delete_after=settings.DELETE_AFTER)
-        
+    
+    await interaction.followup.send(message, delete_after=settings.DELETE_AFTER)
         
 #RUN BOT
 if __name__ == "__main__":
