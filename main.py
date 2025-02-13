@@ -29,6 +29,9 @@ intents.message_content = True
 client = MyClient(command_prefix="!", intents=intents)
 
 ###---------------- COMMANDS ----------------###
+async def delete_message_after_delay(message: discord.Message, delay: int):
+    await asyncio.sleep(delay)
+    await message.delete()
             
 #Global error handling        
 @client.tree.error
@@ -190,7 +193,8 @@ async def ciCommand(interaction: discord.Interaction):
     await interaction.response.defer(ephemeral=False)  # Prevents interaction expiration
 
     if interaction.channel.category is None:
-        await interaction.followup.send(f"_Wrong channel, use one of the model text channels._")
+        message = await interaction.followup.send(f"_Wrong channel, use one of the model text channels._")
+        asyncio.create_task(delete_message_after_delay(message, settings.DELETE_AFTER))
         return
     
     modelName = interaction.channel.category.name.lower()
@@ -200,7 +204,8 @@ async def ciCommand(interaction: discord.Interaction):
     for channel in clockInCategory.channels:
         if isinstance(channel, discord.VoiceChannel) and modelName in channel.name.lower():
             if username in channel.name:
-                await interaction.followup.send(f"_You are already clocked in._", ephemeral=True, delete_after=settings.DELETE_AFTER)
+                message = await interaction.followup.send(f"_You are already clocked in._", ephemeral=True)
+                asyncio.create_task(delete_message_after_delay(message, settings.DELETE_AFTER))
                 return
             
             newChannelName = f"{channel.name}, {username}" if channel.name[-1] != '-' else f"✅{channel.name[1:]} {username}"
@@ -217,13 +222,16 @@ async def ciCommand(interaction: discord.Interaction):
             await interaction.followup.send(f"You are now clocked in _{modelName}_.")
             return
         
-    await interaction.followup.send(f"_Model is missing the voice channel, please create one using /setup._", delete_after=settings.DELETE_AFTER)
+    message = await interaction.followup.send(f"_Model is missing the voice channel, please create one using /setup._")
+    asyncio.create_task(delete_message_after_delay(message, settings.DELETE_AFTER))
     
 @ciCommand.error
 async def on_clock_command_error(interaction: discord.Interaction, error: discord.app_commands.AppCommandError) -> None:
     if str(error).__contains__("RateLimited"):
         await interaction.response.send_message("_Please wait at least **10** minutes before clocking in!_", ephemeral=True, delete_after=settings.DELETE_AFTER)
     
+import asyncio
+
 @client.tree.command(
     name="co", 
     description="Clocks you out. Use in model text channel to clock out for that model.", 
@@ -237,8 +245,8 @@ async def coCommand(interaction: discord.Interaction):
     username = interaction.user.display_name
     
     for channel in clockInCategory.channels:
-        if isinstance(channel, discord.VoiceChannel) and channel.name.lower().__contains__(modelName):
-            if channel.name.__contains__(username):
+        if isinstance(channel, discord.VoiceChannel) and modelName in channel.name.lower():
+            if username in channel.name:
                 # Remove username from channel name
                 usernames = getClockedInUsernames(channel.name)
                 usernames.remove(username)
@@ -257,32 +265,36 @@ async def coCommand(interaction: discord.Interaction):
                 except:
                     log.warning("Error logging co to file")
                 
-                await interaction.followup.send(f"You are now clocked out of _{modelName}_.")
+                message = await interaction.followup.send(f"You are now clocked out of _{modelName}_.", ephemeral=True)
+                asyncio.create_task(delete_message_after_delay(message, settings.DELETE_AFTER))
                 return
             
-    await interaction.followup.send(f"_You are not clocked in on any model._", delete_after=settings.DELETE_AFTER)
+    message = await interaction.followup.send(f"_You are not clocked in on any model._", ephemeral=False)
+    asyncio.create_task(delete_message_after_delay(message, settings.DELETE_AFTER))
+
     
 @coCommand.error
 async def on_clock_command_error(interaction: discord.Interaction, error: discord.app_commands.AppCommandError) -> None:
     if str(error).__contains__("RateLimited"):
         await interaction.response.send_message("_Please wait at least **10** minutes before clocking out!_", ephemeral=True, delete_after=settings.DELETE_AFTER)
         
-#Clock out everyone
 @app_commands.checks.has_permissions(manage_channels=True)
 @app_commands.default_permissions(manage_channels=True)
 @client.tree.command(name="co-all", description="Clocks everyone from vc. Use in model text channel to clock everyone out for that model.", guilds=[settings.GUILD_ID_DEV, settings.GUILD_ID_PROD])
 async def coallCommand(interaction: discord.Interaction):
+    await interaction.response.send_message(f"Processing, please wait...")  # Send initial response
+    
     modelName = interaction.channel.category.name.lower()
     clockInCategory = getCategoryByName(interaction.guild, 'clock in')
     
     for channel in clockInCategory.channels:
-        if isinstance(channel, discord.VoiceChannel) and channel.name.lower().__contains__(modelName):
+        if isinstance(channel, discord.VoiceChannel) and modelName in channel.name.lower():
             newChannelName = "❌" + getBaseChannelName(channel.name)[1:] + " -"
             await channel.edit(name=newChannelName)
-            await interaction.response.send_message(f"_Everyone is now clocked out from {modelName}._", ephemeral=True, delete_after=settings.DELETE_AFTER)
-            return
-                          
-    await interaction.response.send_message(f"_Error occurred._", ephemeral=True, delete_after=settings.DELETE_AFTER)
+    
+    message = await interaction.followup.send(f"_Everyone is now clocked out from {modelName}._", ephemeral=True)
+
+    asyncio.create_task(delete_message_after_delay(message, settings.DELETE_AFTER))
     
 @coallCommand.error
 async def on_clock_command_error(interaction: discord.Interaction, error: discord.app_commands.AppCommandError) -> None:
@@ -401,8 +413,6 @@ async def report(interaction: discord.Interaction, username: str):
     guilds=[settings.GUILD_ID_DEV, settings.GUILD_ID_PROD]
 )
 async def addReferral(interaction: discord.Interaction, employee_nick: str, referral_nick: str):
-    await interaction.response.defer(ephemeral=True)  # Prevents interaction expiration
-    
     managementRole = util.getManagementRole(interaction)
     consultantRole = util.getConsultRole(interaction)
     
@@ -410,14 +420,14 @@ async def addReferral(interaction: discord.Interaction, employee_nick: str, refe
     userRole2 = interaction.user.get_role(consultantRole.id)
     
     if userRole1 is None and userRole2 is None:
-        await interaction.followup.send("_You do not have a required role for this action._", delete_after=settings.DELETE_AFTER)
+        await interaction.response.send_message("_You do not have a required role for this action._", ephemeral=True, delete_after=settings.DELETE_AFTER)
         return
     
     message = "_Problem adding a referral, please check the sheets._"
     if sheets.addReferral(employee_nick, referral_nick):
         message = f"_Added {referral_nick} successfully as a referral to {employee_nick}_"
     
-    await interaction.followup.send(message, delete_after=settings.DELETE_AFTER)
+    await interaction.response.send_message(message, ephemeral=True, delete_after=settings.DELETE_AFTER)
         
 #RUN BOT
 if __name__ == "__main__":

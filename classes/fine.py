@@ -5,6 +5,11 @@ import discord
 import settings
 from classes import sheets
 from datetime import datetime
+import asyncio
+
+async def delete_message_after_delay(message: discord.Message, delay: int):
+    await asyncio.sleep(delay)
+    await message.delete()
 
 class FineModal(discord.ui.Modal, title="Fine an employee"):
     def __init__(self):
@@ -44,13 +49,14 @@ class FineModal(discord.ui.Modal, title="Fine an employee"):
 
     
 async def on_submit(self, interaction: discord.Interaction):
-    await interaction.response.defer()  # This prevents interaction expiration
+    await interaction.response.defer()  # Prevents interaction expiration
     
     try:
         user = discord.utils.get(interaction.guild.members, name=self.username.value)
         
         if user is None:
-            await interaction.followup.send(f"_User with that username doesn't exist_", ephemeral=True, delete_after=settings.DELETE_AFTER)
+            message = await interaction.followup.send(f"_User with that username doesn't exist_", ephemeral=True)
+            asyncio.create_task(delete_message_after_delay(message, settings.DELETE_AFTER))
             return
         
         now = datetime.now()
@@ -60,4 +66,5 @@ async def on_submit(self, interaction: discord.Interaction):
         await interaction.followup.send(f"{user.mention} you have been fined **{self.amount.value}$**, reason: _{self.reason.value}_")
     
     except Exception as e:
-        await interaction.followup.send(f"_Error submitting a fine, contact staff {e}_", ephemeral=True, delete_after=settings.DELETE_AFTER)
+        message = await interaction.followup.send(f"_Error submitting a fine, contact staff {e}_", ephemeral=True)
+        asyncio.create_task(delete_message_after_delay(message, settings.DELETE_AFTER))
