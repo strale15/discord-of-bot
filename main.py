@@ -413,6 +413,8 @@ async def report(interaction: discord.Interaction, username: str):
     guilds=[settings.GUILD_ID_DEV, settings.GUILD_ID_PROD]
 )
 async def addReferral(interaction: discord.Interaction, employee_nick: str, referral_nick: str):
+    await interaction.response.defer(ephemeral=True)  # Prevents interaction expiration
+    
     managementRole = util.getManagementRole(interaction)
     consultantRole = util.getConsultRole(interaction)
     
@@ -420,14 +422,17 @@ async def addReferral(interaction: discord.Interaction, employee_nick: str, refe
     userRole2 = interaction.user.get_role(consultantRole.id)
     
     if userRole1 is None and userRole2 is None:
-        await interaction.response.send_message("_You do not have a required role for this action._", ephemeral=True, delete_after=settings.DELETE_AFTER)
+        msg = await interaction.followup.send("_You do not have a required role for this action._")
+        asyncio.create_task(delete_message_after_delay(msg, settings.DELETE_AFTER))
         return
     
     message = "_Problem adding a referral, please check the sheets._"
     if sheets.addReferral(employee_nick, referral_nick):
         message = f"_Added {referral_nick} successfully as a referral to {employee_nick}_"
     
-    await interaction.response.send_message(message, ephemeral=True, delete_after=settings.DELETE_AFTER)
+    msg = await interaction.followup.send(message)
+    asyncio.create_task(delete_message_after_delay(msg, settings.DELETE_AFTER))
+    
         
 #RUN BOT
 if __name__ == "__main__":
