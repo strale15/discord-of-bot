@@ -49,7 +49,7 @@ class FineModal(discord.ui.Modal, title="Fine an employee"):
 
     
 async def on_submit(self, interaction: discord.Interaction):
-    await interaction.response.defer()  # Prevents interaction expiration
+    await interaction.response.defer(ephemeral=True)
     
     try:
         user = discord.utils.get(interaction.guild.members, name=self.username.value)
@@ -63,7 +63,8 @@ async def on_submit(self, interaction: discord.Interaction):
         current_date = f"{now.month}/{now.day}/{now.year}"
         sheets.addFine(username=self.username.value, reason=self.reason.value, amount=int(self.amount.value), date=current_date)
         
-        await interaction.followup.send(f"{user.mention} you have been fined **{self.amount.value}$**, reason: _{self.reason.value}_")
+        await interaction.channel.send(f"{user.mention} you have been fined **{self.amount.value}$**, reason: _{self.reason.value}_", ephemeral=False)
+        await interaction.followup.send(f"_{user.name} has been fined_", ephemeral=True)
     
     except Exception as e:
         message = await interaction.followup.send(f"_Error submitting a fine, contact staff {e}_", ephemeral=True)

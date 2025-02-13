@@ -265,11 +265,11 @@ async def coCommand(interaction: discord.Interaction):
                 except:
                     log.warning("Error logging co to file")
                 
-                message = await interaction.followup.send(f"You are now clocked out of _{modelName}_.", ephemeral=True)
+                message = await interaction.followup.send(f"You are now clocked out of _{modelName}_.", ephemeral=False)
                 asyncio.create_task(delete_message_after_delay(message, settings.DELETE_AFTER))
                 return
             
-    message = await interaction.followup.send(f"_You are not clocked in on any model._", ephemeral=False)
+    message = await interaction.followup.send(f"_You are not clocked in on any model._", ephemeral=True)
     asyncio.create_task(delete_message_after_delay(message, settings.DELETE_AFTER))
 
     
