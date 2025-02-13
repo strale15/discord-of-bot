@@ -119,11 +119,8 @@ async def executeCommand(interaction: discord.Interaction, model_name: str):
     
     try:
         createdCategory = await interaction.guild.create_category(model_name, overwrites=overwrites)
-        await asyncio.sleep(0.1)
         await interaction.guild.create_text_channel(f"💬-{model_name}-staff-chat", category=createdCategory)
-        await asyncio.sleep(0.1)
         await interaction.guild.create_text_channel(f"📰-{model_name}-info", category=createdCategory)
-        await asyncio.sleep(0.1)
         await interaction.guild.create_text_channel(f"📷-{model_name}-customs", category=createdCategory)
         await interaction.response.send_message(f"_Successfully created {model_name} model space, you can now use /setup in staff chat to create clock in vc!_", ephemeral=True, delete_after=settings.DELETE_AFTER)
     except Exception as e:
