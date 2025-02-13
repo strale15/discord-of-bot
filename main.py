@@ -25,7 +25,7 @@ log = settings.logging.getLogger()
 intents = discord.Intents.all()
 intents.message_content = True
 
-client = MyClient(command_prefix="!", intents=intents, max_ratelimit_timeout=90)
+client = MyClient(command_prefix="!", intents=intents)
 
 ###---------------- COMMANDS ----------------###
             
