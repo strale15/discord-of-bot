@@ -67,7 +67,8 @@ class FineModal(discord.ui.Modal, title="Fine an employee"):
             sheets.addFine(username=self.username.value, reason=self.reason.value, amount=int(self.amount.value), date=current_date)
 
             # Send another message to confirm fine submission
-            await interaction.followup.send(f"_{user.name} has been fined._", ephemeral=True)
+            message = await interaction.followup.send(f"_{user.name} has been fined._", ephemeral=True)
+            asyncio.create_task(delete_message_after_delay(message, settings.DELETE_AFTER))
 
             # Optionally, you can also send a message in the same channel (if needed)
             await interaction.channel.send(f"{user.mention} you have been fined **{self.amount.value}$**, reason: _{self.reason.value}_")
