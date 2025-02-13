@@ -1,3 +1,4 @@
+import datetime
 from email.mime import message
 import discord
 from discord.ext import commands
@@ -203,7 +204,14 @@ async def ciCommand(interaction: discord.Interaction):
                 newChannelName = "✅" + channel.name[1:] + " " + username
               
             await channel.edit(name=newChannelName)  
-            await interaction.response.send_message(f"You are now clocked in! Good luck soldier 🫡", ephemeral=True, delete_after=settings.DELETE_AFTER)
+            try:
+                with open("clocklog.txt", "a") as file:
+                    now = datetime.datetime.now()
+                    datetime_string = now.strftime("%Y-%m-%d %H:%M:%S")
+                    file.write(f"CI [{datetime_string}] - username: {interaction.user.name} - model: {modelName}\n")
+            except:
+                log.warning("Error logging ci to file")
+            await interaction.response.send_message(f"You are now clocked in _{modelName}_.", ephemeral=False)
             return
         
     await interaction.response.send_message(f"_Model is missing the voice channel, please create one using /setup._", ephemeral=True, delete_after=settings.DELETE_AFTER)
@@ -233,7 +241,14 @@ async def coCommand(interaction: discord.Interaction):
                     newChannelName = getBaseChannelName(channel.name) + " - " + ', '.join(usernames)
                     
                 await channel.edit(name=newChannelName)
-                await interaction.response.send_message("_You are now clocked out._", ephemeral=True, delete_after=settings.DELETE_AFTER)
+                try:
+                    with open("clocklog.txt", "a") as file:
+                        now = datetime.datetime.now()
+                        datetime_string = now.strftime("%Y-%m-%d %H:%M:%S")
+                        file.write(f"CO [{datetime_string}] - username: {interaction.user.name} - model: {modelName}\n")
+                except:
+                    log.warning("Error logging co to file")
+                await interaction.response.send_message(f"You are now clocked out of _{modelName}_.", ephemeral=False)
                 return
             
     await interaction.response.send_message(f"_You are not clocked in on any model._", ephemeral=True, delete_after=settings.DELETE_AFTER)
