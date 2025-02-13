@@ -48,24 +48,33 @@ class FineModal(discord.ui.Modal, title="Fine an employee"):
         self.add_item(self.reason)
 
     
-async def on_submit(self, interaction: discord.Interaction):
-    await interaction.response.defer(ephemeral=True)
-    
-    try:
-        user = discord.utils.get(interaction.guild.members, name=self.username.value)
-        
-        if user is None:
-            message = await interaction.followup.send(f"_User with that username doesn't exist_", ephemeral=True)
+    async def on_submit(self, interaction: discord.Interaction):
+        try:
+            # Defer the response
+            await interaction.response.defer(ephemeral=True)  # Defers the response so it doesn't timeout
+
+            # Handle user lookup and fine submission
+            user = discord.utils.get(interaction.guild.members, name=self.username.value)
+
+            if user is None:
+                message = await interaction.followup.send(f"_User with that username doesn't exist_", ephemeral=True)
+                asyncio.create_task(delete_message_after_delay(message, settings.DELETE_AFTER))
+                return
+
+            # Add fine details to the sheet
+            now = datetime.now()
+            current_date = f"{now.month}/{now.day}/{now.year}"
+            sheets.addFine(username=self.username.value, reason=self.reason.value, amount=int(self.amount.value), date=current_date)
+
+            # Send confirmation message
+            await interaction.followup.send(f"{user.mention} you have been fined **{self.amount.value}$**, reason: _{self.reason.value}_")
+            # Send another message to confirm fine submission
+            await interaction.followup.send(f"_{user.name} has been fined_", ephemeral=True)
+
+            # Optionally, you can also send a message in the same channel (if needed)
+            await interaction.channel.send(f"{user.mention} you have been fined **{self.amount.value}$**, reason: _{self.reason.value}_", ephemeral=False)
+
+        except Exception as e:
+            # Error handling
+            message = await interaction.followup.send(f"_Error submitting a fine, contact staff: {e}_", ephemeral=True)
             asyncio.create_task(delete_message_after_delay(message, settings.DELETE_AFTER))
-            return
-        
-        now = datetime.now()
-        current_date = f"{now.month}/{now.day}/{now.year}"
-        sheets.addFine(username=self.username.value, reason=self.reason.value, amount=int(self.amount.value), date=current_date)
-        
-        await interaction.channel.send(f"{user.mention} you have been fined **{self.amount.value}$**, reason: _{self.reason.value}_", ephemeral=False)
-        await interaction.followup.send(f"_{user.name} has been fined_", ephemeral=True)
-    
-    except Exception as e:
-        message = await interaction.followup.send(f"_Error submitting a fine, contact staff {e}_", ephemeral=True)
-        asyncio.create_task(delete_message_after_delay(message, settings.DELETE_AFTER))
