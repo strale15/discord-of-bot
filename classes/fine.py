@@ -66,13 +66,11 @@ class FineModal(discord.ui.Modal, title="Fine an employee"):
             current_date = f"{now.month}/{now.day}/{now.year}"
             sheets.addFine(username=self.username.value, reason=self.reason.value, amount=int(self.amount.value), date=current_date)
 
-            # Send confirmation message
-            await interaction.followup.send(f"{user.mention} you have been fined **{self.amount.value}$**, reason: _{self.reason.value}_")
             # Send another message to confirm fine submission
-            await interaction.followup.send(f"_{user.name} has been fined_", ephemeral=True)
+            await interaction.followup.send(f"_{user.name} has been fined._", ephemeral=True)
 
             # Optionally, you can also send a message in the same channel (if needed)
-            await interaction.channel.send(f"{user.mention} you have been fined **{self.amount.value}$**, reason: _{self.reason.value}_", ephemeral=False)
+            await interaction.channel.send(f"{user.mention} you have been fined **{self.amount.value}$**, reason: _{self.reason.value}_")
 
         except Exception as e:
             # Error handling
