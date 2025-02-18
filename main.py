@@ -139,18 +139,17 @@ async def executeCommand(interaction: discord.Interaction, model_name: str):
     
     try:
         #Remove model category
-        allCategories = interaction.guild.categories
-        for category in allCategories:
-            if category.name.lower().__contains__(model_name):
-                for channel in category.channels:
-                        await channel.delete()
-                await category.delete()
+        modelCategory = util.getCategoryByName(interaction.guild, model_name)
+        for channel in modelCategory.channels:
+            await channel.delete()
+        await modelCategory.delete()
                 
         #Remove model vc
-        allChannels = interaction.guild.channels
-        for channel in allChannels:
+        clockInCategory = getCategoryByName(interaction.guild, 'clock in')
+        for channel in clockInCategory.channels:
             if channel.name.lower().__contains__(model_name):
                 await channel.delete()
+                break
                 
         modelRole = getRoleByName(interaction.guild, model_name)
         if modelRole is not None:
