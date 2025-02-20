@@ -2,9 +2,9 @@ import util
 import discord
 import settings
 
-class MassMessageChangeModal(discord.ui.Modal, title="Comment on MM"):
+class MassMessageCommentModal(discord.ui.Modal, title="Comment on MM"):
     def __init__(self, ctx: discord.Interaction, requestChannel: discord.TextChannel, employee: discord.User, modelName: str, requestMsg: discord.Message, embed: discord.Embed):
-        super().__init__(title="Request change for mm") 
+        super().__init__(title="Comment on MM") 
         self.ctx = ctx
         self.requestChannel = requestChannel
         self.employee = employee
@@ -40,14 +40,63 @@ class MassMessageChangeModal(discord.ui.Modal, title="Comment on MM"):
         
         self.embed.color = discord.Color.yellow()
         self.embed.remove_footer()
-        self.embed.fields[0].name = "Original mm"
-        self.embed.fields[0].inline = False
+        self.embed.set_field_at(0, name="Original message", value=self.embed.fields[0].value, inline=False)
         self.embed.add_field(name="Comment", value=self.comment.value, inline=False)
         if len(self.proposition.value) > 0 and self.proposition.value != self.embed.fields[0].value:
             self.embed.add_field(name="Proposed change:", value=self.proposition.value, inline=False)
         
         
         await self.requestChannel.send(f"{self.employee.mention} your mm for **{self.modelName}** request change by **{interaction.user.display_name}**\n_Commented mm:_", embed=self.embed)
+        await interaction.response.send_message(f"_Change requested_", ephemeral=True, delete_after=settings.DELETE_AFTER)
+        
+class MassMessageApproveAndCommentModal(discord.ui.Modal, title="Approve and comment on MM"):
+    def __init__(self, ctx: discord.Interaction, requestChannel: discord.TextChannel, employee: discord.User, modelName: str, requestMsg: discord.Message, embed: discord.Embed):
+        super().__init__(title="Approve and comment on MM") 
+        self.ctx = ctx
+        self.requestChannel = requestChannel
+        self.employee = employee
+        self.modelName =  modelName
+        self.requestMsg = requestMsg
+        self.embed = embed
+           
+        self.comment = discord.ui.TextInput(
+            label="Comment:",
+            placeholder="You comment...",
+            required=True,
+            min_length=1,
+            max_length=1000,
+            style=discord.TextStyle.paragraph,
+        )
+        
+        self.proposition = discord.ui.TextInput(
+            label="Edited MM:",
+            placeholder="Your edited mm...",
+            required=False,
+            default=embed.fields[0].value,
+            min_length=0,
+            max_length=1000,
+            style=discord.TextStyle.paragraph,
+        )
+
+        # Add the field to the modal
+        self.add_item(self.comment)
+        self.add_item(self.proposition)
+    
+    async def on_submit(self, interaction: discord. Interaction):
+        originalMessage = self.embed.fields[0].value
+        
+        await self.requestMsg.delete()
+        
+        self.embed.color = discord.Color.green()
+        self.embed.remove_footer()
+        self.embed.remove_field(0)
+        
+        self.embed.add_field(name="Comment", value=self.comment.value, inline=False)
+        if len(self.proposition.value) > 0 and self.proposition.value != self.embed.fields[0].value:
+            originalMessage = self.proposition.value
+        
+        
+        await self.requestChannel.send(f"{self.employee.mention} your mm for **{self.modelName}** was approved and commented by **{interaction.user.display_name}**\nMessage for clipboard:\n```{originalMessage}```", embed=self.embed)
         await interaction.response.send_message(f"_Change requested_", ephemeral=True, delete_after=settings.DELETE_AFTER)
 
 class MmaView(discord.ui.View):
@@ -62,15 +111,28 @@ class MmaView(discord.ui.View):
 
     @discord.ui.button(label="Approve", style=discord.ButtonStyle.green)
     async def approve(self, interaction: discord.Interaction, Button: discord.ui.Button):
+        originalMessage = self.embed.fields[0].value
+        
         await self.mm.delete()
+        
+        self.embed.set_field_at(0, name="APPROVED", value="", inline=False)
         self.embed.color = discord.Color.green()
         self.embed.remove_footer()
-        await self.requestChannel.send(f"{self.employee.mention} your mm for **{self.modelName}** was approved by **{interaction.user.display_name}**\n_Approved mm request:_", embed=self.embed)
-        await interaction.response.send_message(f"_Approved the mm_", ephemeral=True, delete_after=settings.DELETE_AFTER)
         
-    @discord.ui.button(label="Request change", style=discord.ButtonStyle.blurple)
+        await self.requestChannel.send(
+            f"{self.employee.mention} your mm for **{self.modelName}** was approved by **{interaction.user.display_name}**\nMessage for clipboard:\n```{originalMessage}```",
+            embed=self.embed
+        )
+        await interaction.response.send_message(f"_Approved the mm_", ephemeral=True, delete_after=settings.DELETE_AFTER)
+
+        
+    @discord.ui.button(label="Approve with comment", style=discord.ButtonStyle.green)
+    async def approveAndComment(self, interaction: discord.Interaction, Button: discord.ui.Button):
+        await interaction.response.send_modal(MassMessageApproveAndCommentModal(interaction, self.requestChannel, self.employee, self.modelName, self.mm, self.embed))
+        
+    @discord.ui.button(label="Comment", style=discord.ButtonStyle.blurple)
     async def requestChange(self, interaction: discord.Interaction, Button: discord.ui.Button):
-        await interaction.response.send_modal(MassMessageChangeModal(interaction, self.requestChannel, self.employee, self.modelName, self.mm, self.embed))
+        await interaction.response.send_modal(MassMessageCommentModal(interaction, self.requestChannel, self.employee, self.modelName, self.mm, self.embed))
         
     @discord.ui.button(label="Reject", style=discord.ButtonStyle.red)
     async def reject(self, interaction: discord.Interaction, Button: discord.ui.Button):
