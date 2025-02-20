@@ -163,13 +163,15 @@ class FixMmaView(discord.ui.View):
     @discord.ui.button(label="Fix me", style=discord.ButtonStyle.green)
     async def fixMma(self, interaction: discord.Interaction, Button: discord.ui.Button):
         if(interaction.user.id == self.employee.id):     
-            await interaction.response.send_modal(MassMessageModal(message=self.message))
+            await interaction.response.send_modal(MassMessageModal(message=self.message, commentedMMEmbed=self.mm))
         else:
             await interaction.response.send_message(f"_This is not your mm._", ephemeral=True, delete_after=settings.DELETE_AFTER)
 
 class MassMessageModal(discord.ui.Modal, title="Submit MM"):
-    def __init__(self, message: str = ""):
-        super().__init__(title="Submit MM")    
+    def __init__(self, message: str = "", commentedMMEmbed: discord.Message=None):
+        super().__init__(title="Submit MM")
+        
+        self.commentedMMEmbed = commentedMMEmbed
         
         self.mass_message = discord.ui.TextInput(
             label="Mass message:",
@@ -206,7 +208,10 @@ class MassMessageModal(discord.ui.Modal, title="Submit MM"):
                     file=discord.File(file, filename=thumbnail_filename)
                 )
                 await message.edit(view=MmaView(message, interaction.channel, interaction.user, interaction.channel.category.name, embed_message))
-
+                
+            if self.commentedMMEmbed != None:
+                await self.commentedMMEmbed.edit(view=None)
+                
             await interaction.response.send_message(f"{interaction.user.mention} Thank you for submitting your mm, it will be reviewed!", ephemeral=True, delete_after=settings.DELETE_AFTER)
         except Exception as e:
             await interaction.response.send_message(f"_Error submitting the mm, contact staff {e}_", ephemeral=True, delete_after=settings.DELETE_AFTER)
