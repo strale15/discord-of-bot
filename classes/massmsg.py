@@ -1,4 +1,5 @@
 from ast import Str
+from os import name
 import util
 import discord
 import settings
@@ -50,7 +51,7 @@ class MassMessageCommentModal(discord.ui.Modal, title="Comment on MM"):
             mmText = self.proposition.value
         
         message = await self.requestChannel.send(f"{self.employee.mention} your mm for **{self.modelName}** request change by **{interaction.user.display_name}**\n_Commented mm:_", embed=self.embed)
-        await message.edit(view=FixMmaView(message, interaction.channel, interaction.user, interaction.channel.category.name, mmText))
+        await message.edit(view=FixMmaView(message, interaction.channel, self.employee, interaction.channel.category.name, mmText))
         await interaction.response.send_message(f"_Change requested_", ephemeral=True, delete_after=settings.DELETE_AFTER)
         
 class MassMessageApproveAndCommentModal(discord.ui.Modal, title="Approve and comment on MM"):
@@ -161,7 +162,10 @@ class FixMmaView(discord.ui.View):
 
     @discord.ui.button(label="Fix me", style=discord.ButtonStyle.green)
     async def fixMma(self, interaction: discord.Interaction, Button: discord.ui.Button):
-        await interaction.response.send_modal(MassMessageModal(message=self.message))
+        if(interaction.user.id == self.employee.id):     
+            await interaction.response.send_modal(MassMessageModal(message=self.message))
+        else:
+            await interaction.response.send_message(f"_This is not your mm._", ephemeral=True, delete_after=settings.DELETE_AFTER)
 
 class MassMessageModal(discord.ui.Modal, title="Submit MM"):
     def __init__(self, message: str = ""):
