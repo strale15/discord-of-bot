@@ -1,3 +1,4 @@
+from ast import Str
 import util
 import discord
 import settings
@@ -36,6 +37,8 @@ class MassMessageCommentModal(discord.ui.Modal, title="Comment on MM"):
         self.add_item(self.proposition)
     
     async def on_submit(self, interaction: discord. Interaction):
+        mmText = self.embed.fields[0].value
+        
         await self.requestMsg.delete()
         
         self.embed.color = discord.Color.yellow()
@@ -44,9 +47,10 @@ class MassMessageCommentModal(discord.ui.Modal, title="Comment on MM"):
         self.embed.add_field(name="Comment", value=self.comment.value, inline=False)
         if len(self.proposition.value) > 0 and self.proposition.value != self.embed.fields[0].value:
             self.embed.add_field(name="Proposed change:", value=self.proposition.value, inline=False)
+            mmText = self.proposition.value
         
-        
-        await self.requestChannel.send(f"{self.employee.mention} your mm for **{self.modelName}** request change by **{interaction.user.display_name}**\n_Commented mm:_", embed=self.embed)
+        message = await self.requestChannel.send(f"{self.employee.mention} your mm for **{self.modelName}** request change by **{interaction.user.display_name}**\n_Commented mm:_", embed=self.embed)
+        await message.edit(view=FixMmaView(message, interaction.channel, interaction.user, interaction.channel.category.name, mmText))
         await interaction.response.send_message(f"_Change requested_", ephemeral=True, delete_after=settings.DELETE_AFTER)
         
 class MassMessageApproveAndCommentModal(discord.ui.Modal, title="Approve and comment on MM"):
@@ -144,10 +148,25 @@ class MmaView(discord.ui.View):
             await interaction.response.send_message(f"_Rejected the mm_", ephemeral=True, delete_after=settings.DELETE_AFTER)
         except:
             await interaction.response.send_message(f"_Rejected the mm but there was an error with sending the notification._", ephemeral=True, delete_after=settings.DELETE_AFTER)
+            
+class FixMmaView(discord.ui.View):
+    def __init__(self, mm: discord.Message, requestChannel: discord.TextChannel, employee: discord.User, modelName: str, message: str):
+        super().__init__(timeout=None)
+        
+        self.mm = mm
+        self.requestChannel = requestChannel
+        self.employee = employee
+        self.modelName = modelName
+        self.message = message
+
+    @discord.ui.button(label="Fix me", style=discord.ButtonStyle.green)
+    async def fixMma(self, interaction: discord.Interaction, Button: discord.ui.Button):
+        await interaction.response.send_modal(MassMessageModal(message=self.message))
 
 class MassMessageModal(discord.ui.Modal, title="Submit MM"):
-    def __init__(self):
+    def __init__(self, message: str = ""):
         super().__init__(title="Submit MM")    
+        
         self.mass_message = discord.ui.TextInput(
             label="Mass message:",
             placeholder="Message...",
@@ -155,6 +174,7 @@ class MassMessageModal(discord.ui.Modal, title="Submit MM"):
             min_length=1,
             max_length=1000,
             style=discord.TextStyle.paragraph,
+            default=message  # Set default value if provided
         )
 
         # Add the field to the modal
