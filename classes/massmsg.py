@@ -101,7 +101,7 @@ class MassMessageApproveAndCommentModal(discord.ui.Modal, title="Approve and com
             originalMessage = self.proposition.value
         
         
-        await self.requestChannel.send(f"{self.employee.mention} your mm for **{self.modelName}** was approved and commented by **{interaction.user.display_name}**\nMessage for clipboard:\n```{originalMessage}```", embed=self.embed)
+        await self.requestChannel.send(f"{self.employee.mention} your mm for **{self.modelName}** was approved and commented by **{interaction.user.display_name}**\nMessage for clipboard:\n{settings.LINE_TEXT}\n{originalMessage}\n{settings.LINE_TEXT}\n", embed=self.embed)
         await interaction.response.send_message(f"_Change requested_", ephemeral=True, delete_after=settings.DELETE_AFTER)
 
 class MmaView(discord.ui.View):
@@ -125,7 +125,7 @@ class MmaView(discord.ui.View):
         self.embed.remove_footer()
         
         await self.requestChannel.send(
-            f"{self.employee.mention} your mm for **{self.modelName}** was approved by **{interaction.user.display_name}**\nMessage for clipboard:\n```{originalMessage}```",
+            f"{self.employee.mention} your mm for **{self.modelName}** was approved by **{interaction.user.display_name}**\nMessage for clipboard:\n{settings.LINE_TEXT}\n{originalMessage}\n{settings.LINE_TEXT}\n",
             embed=self.embed
         )
         await interaction.response.send_message(f"_Approved the mm_", ephemeral=True, delete_after=settings.DELETE_AFTER)

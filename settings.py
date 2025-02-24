@@ -7,6 +7,8 @@ import logging
 
 load_dotenv()
 
+LINE_TEXT = "------------------------------------------------------------------------------"
+
 DISCORD_API_SECRET = os.getenv("DISCORD_API_TOKEN")
 
 BASE_DIR = pathlib.Path(__file__).parent
