@@ -447,7 +447,7 @@ async def clockIn(interaction: discord.Interaction):
         except:
             log.warning("Error logging ci to file")
         
-        await interaction.response.send_message(f"Clocked in successfully!", delete_after=settings.DELETE_AFTER, ephemeral=True)
+        await interaction.response.send_message(f"Clocked in successfully!", ephemeral=False)
         return
     elif interaction.channel.name[-1] == settings.TICK_EMOJI:
         await interaction.response.send_message(f"Already clocked in!", delete_after=settings.DELETE_AFTER, ephemeral=True)
@@ -476,7 +476,7 @@ async def clockOut(interaction: discord.Interaction):
         except:
             log.warning("Error logging co to file")
         
-        await interaction.response.send_message(f"Clocked out successfully!", delete_after=settings.DELETE_AFTER, ephemeral=True)
+        await interaction.response.send_message(f"Clocked out successfully!", ephemeral=False)
         return
     elif interaction.channel.name[-1] == settings.CROSS_EMOJI:
         await interaction.response.send_message(f"Already clocked out!", delete_after=settings.DELETE_AFTER, ephemeral=True)
