@@ -424,7 +424,7 @@ async def addReferral(interaction: discord.Interaction, employee_nick: str, refe
     guilds=[settings.M_GUILD_ID]
 )
 async def setupManager(interaction: discord.Interaction): 
-    await interaction.response.send_message(f"Setup channel:", ephemeral=True, view=management.SetupView(interaction))
+    await interaction.response.send_message(f"Setup channel:", ephemeral=True, delete_after=300, view=management.SetupView(interaction))
     
 @client.tree.command(
     name="ci", 
@@ -432,7 +432,7 @@ async def setupManager(interaction: discord.Interaction):
     guilds=[settings.M_GUILD_ID]
 )
 async def clockIn(interaction: discord.Interaction):
-    if not interaction.channel.name.lower().__contains__(interaction.user.name):
+    if not util.interactionChannelContainsUserName(interaction):
         await interaction.response.send_message(f"You are not this user!", delete_after=settings.DELETE_AFTER, ephemeral=True)
         return
         
@@ -443,7 +443,7 @@ async def clockIn(interaction: discord.Interaction):
             with open("clocklog.txt", "a") as file:
                 now = datetime.datetime.now()
                 datetime_string = now.strftime("%Y-%m-%d %H:%M:%S")
-                file.write(f"CI [{datetime_string}] - username: {interaction.user.name} - role: {interaction.channel.category.name}\n")
+                file.write(f"CI [{datetime_string}] - username: {interaction.user.display_name} - role: {interaction.channel.category.name}\n")
         except:
             log.warning("Error logging ci to file")
         
@@ -461,7 +461,7 @@ async def clockIn(interaction: discord.Interaction):
     guilds=[settings.M_GUILD_ID]
 )
 async def clockOut(interaction: discord.Interaction):
-    if not interaction.channel.name.lower().__contains__(interaction.user.name):
+    if not util.interactionChannelContainsUserName(interaction):
         await interaction.response.send_message(f"You are not this user!", delete_after=settings.DELETE_AFTER, ephemeral=True)
         return
     
@@ -472,7 +472,7 @@ async def clockOut(interaction: discord.Interaction):
             with open("clocklog.txt", "a") as file:
                 now = datetime.datetime.now()
                 datetime_string = now.strftime("%Y-%m-%d %H:%M:%S")
-                file.write(f"CO [{datetime_string}] - username: {interaction.user.name} - role: {interaction.channel.category.name}\n")
+                file.write(f"CO [{datetime_string}] - username: {interaction.user.display_name} - role: {interaction.channel.category.name}\n")
         except:
             log.warning("Error logging co to file")
         

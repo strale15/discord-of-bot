@@ -1,16 +1,22 @@
 import discord
 import settings
 
-def findChannelsByNameInCategory(category: discord.CategoryChannel, word: str) -> list[discord.TextChannel]:
+def findChannelsByNameInCategory(category: discord.CategoryChannel, username: str) -> list[discord.TextChannel]:
     channels = []
+    username = username.replace(" ", "-").lower()
+    
     for channel in category.channels:
-        if channel.name.lower().__contains__(word.lower()):  # Case-insensitive search
+        if channel.name.lower().__contains__(username):  # Case-insensitive search
             channels.append(channel)
             
     if len(channels) == 0:
         return None
     
     return channels
+
+def interactionChannelContainsUserName(interaction: discord.Interaction) -> bool:
+    username = interaction.user.display_name.replace(" ", "-").lower()
+    return interaction.channel.name.lower().__contains__(username)
 
 def getCategoryByName(guild: discord.Guild, categoryName: str) -> discord.CategoryChannel:
     for category in guild.categories:

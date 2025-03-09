@@ -27,12 +27,12 @@ class SetupView(discord.ui.View):
             return
         
         #Check if channel with username already exists, if not create voice + text
-        if util.findChannelsByNameInCategory(category=category, word=selected_user.name) is not None:
+        if util.findChannelsByNameInCategory(category=category, username=selected_user.display_name) is not None:
             await interaction.response.send_message("That user is already setup!", delete_after=settings.DELETE_AFTER, ephemeral=True)
             return
         
-        await interaction.guild.create_text_channel(selected_user.name + " -❌", category=category)
-        await interaction.guild.create_text_channel(f"{selected_user.name}-schedule", category=category)
+        await interaction.guild.create_text_channel(selected_user.display_name + " -❌", category=category)
+        await interaction.guild.create_text_channel(f"{selected_user.display_name}-schedule", category=category)
         await interaction.response.send_message(f"Successfully setup channels for {selected_user.display_name}!", delete_after=settings.DELETE_AFTER, ephemeral=True)
         
     @discord.ui.button(label="Delete", style=discord.ButtonStyle.red)
@@ -49,7 +49,7 @@ class SetupView(discord.ui.View):
             await interaction.response.send_message("No such category!", delete_after=settings.DELETE_AFTER, ephemeral=True)
             return
         
-        channels = util.findChannelsByNameInCategory(category=category, word=selected_user.name)
+        channels = util.findChannelsByNameInCategory(category=category, username=selected_user.display_name)
         if channels is None:
             await interaction.response.send_message("That user does not have channels set up!", delete_after=settings.DELETE_AFTER, ephemeral=True)
             return
