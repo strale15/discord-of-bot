@@ -6,17 +6,18 @@ from discord import HTTPException, app_commands
 import asyncio
 
 import settings
-from classes import massmsg, customs, formats, voice, leaks, sheets, fine
+from classes import massmsg, customs, formats, voice, leaks, sheets, fine, management
 from util import *
 import util
+
 class MyClient(commands.Bot):
     async def on_ready(self):
         log.info(f'Logged on as {self.user}!')
         
         try:
-            syncedDev = await self.tree.sync(guild=settings.GUILD_ID_DEV)
-            syncedProd = await self.tree.sync(guild=settings.GUILD_ID_PROD)
-            log.info(f'Synced {len(syncedDev)} on dev and {len(syncedProd)} commands on prod!')        
+            synced = await self.tree.sync(guild=settings.GUILD_ID)
+            syncedMan = await self.tree.sync(guild=settings.M_GUILD_ID)
+            log.info(f'Synced {len(synced)} commands and {len(syncedMan)} on mangement!')        
         except Exception as e:
             log.info(f"Sync failed {e}")
             
@@ -41,25 +42,21 @@ async def on_error(interaction: discord.Interaction, error: discord.app_commands
        
 @app_commands.checks.has_permissions(manage_channels=True)
 @app_commands.default_permissions(manage_channels=True)
-@client.tree.command(name="ping", description="Check bot latency.", guilds=[settings.GUILD_ID_DEV, settings.GUILD_ID_PROD])
+@client.tree.command(name="ping", description="Check bot latency.", guilds=[settings.GUILD_ID])
 async def testSanity(interaction: discord.Interaction):
     await interaction.response.send_message(f"*Hi!* Everything seems to work properly 😊 (everything is configured, latency - {client.latency})", ephemeral=True, delete_after=settings.DELETE_AFTER)
     
-@client.tree.command(name="test-param", description="Performs a param check.", guilds=[settings.GUILD_ID_DEV])
-async def testSanity(interaction: discord.Interaction, text: str):
-    await interaction.response.send_message(text, ephemeral=True, delete_after=settings.DELETE_AFTER)
-    
-# Format command
+#Format command
 @app_commands.checks.has_permissions(manage_channels=True)
 @app_commands.default_permissions(manage_channels=True)
-@client.tree.command(name="format", description="Makes a nicely formatted message", guilds=[settings.GUILD_ID_DEV, settings.GUILD_ID_PROD])
+@client.tree.command(name="format", description="Makes a nicely formatted message", guilds=[settings.GUILD_ID])
 async def multiline(interaction: discord.Interaction):
     await interaction.response.send_modal(formats.FormatModal())
         
 #Setup command
 @app_commands.checks.has_permissions(manage_channels=True)
 @app_commands.default_permissions(manage_channels=True)
-@client.tree.command(name="setup", description="Creates voice channel in 'clock in' based on the model category", guilds=[settings.GUILD_ID_DEV, settings.GUILD_ID_PROD])
+@client.tree.command(name="setup", description="Creates voice channel in 'clock in' based on the model category", guilds=[settings.GUILD_ID])
 async def setupClockInChannel(interaction: discord.Interaction):
     if interaction.channel.category is None:
         await interaction.response.send_message(f"_Please use the command in appropriate model text channel._", ephemeral=True, delete_after=settings.DELETE_AFTER)
@@ -91,7 +88,7 @@ async def setupClockInChannel(interaction: discord.Interaction):
                 }
     
     try:
-        createdChannel = await interaction.guild.create_voice_channel("❌" + modelName + " -", category=clockInCategory, overwrites=overwrites)
+        createdChannel = await interaction.guild.create_voice_channel(settings.CROSS_EMOJI + modelName + " -", category=clockInCategory, overwrites=overwrites)
         await interaction.response.send_message(f"_Successfully created {createdChannel.name} vc!_", ephemeral=True, delete_after=settings.DELETE_AFTER)
     except Exception as e:
         await interaction.response.send_message(f"_Channel creation failed {e}_", ephemeral=True, delete_after=settings.DELETE_AFTER)
@@ -99,7 +96,7 @@ async def setupClockInChannel(interaction: discord.Interaction):
 #Recruit command - helper
 @app_commands.checks.has_permissions(manage_channels=True)
 @app_commands.default_permissions(manage_channels=True)
-@client.tree.command(name="recruit", description="Create basic category and channel for a model", guilds=[settings.GUILD_ID_DEV, settings.GUILD_ID_PROD])
+@client.tree.command(name="recruit", description="Create basic category and channel for a model", guilds=[settings.GUILD_ID])
 async def executeCommand(interaction: discord.Interaction, model_name: str):
     alreadyExistingCategory = getCategoryByName(interaction.guild, model_name)
     if alreadyExistingCategory is not None:
@@ -133,7 +130,7 @@ async def executeCommand(interaction: discord.Interaction, model_name: str):
 #Clean model info
 @app_commands.checks.has_permissions(manage_channels=True)
 @app_commands.default_permissions(manage_channels=True)
-@client.tree.command(name="delete-model-info", description="Deletes all model info (categories, channels, role)", guilds=[settings.GUILD_ID_DEV, settings.GUILD_ID_PROD])
+@client.tree.command(name="delete-model-info", description="Deletes all model info (categories, channels, role)", guilds=[settings.GUILD_ID])
 async def executeCommand(interaction: discord.Interaction, model_name: str):
     model_name = model_name.lower()
     
@@ -162,7 +159,7 @@ async def executeCommand(interaction: discord.Interaction, model_name: str):
 #Create role - helper
 @app_commands.checks.has_permissions(manage_roles=True)
 @app_commands.default_permissions(manage_roles=True)
-@client.tree.command(name="c-role", description="Creates role and user to it", guilds=[settings.GUILD_ID_DEV, settings.GUILD_ID_PROD])
+@client.tree.command(name="c-role", description="Creates role and user to it", guilds=[settings.GUILD_ID])
 async def executeCommand(interaction: discord.Interaction, role_name: str):
     modelRole = getRoleByName(interaction.guild, role_name)
     if modelRole is None:
@@ -170,23 +167,11 @@ async def executeCommand(interaction: discord.Interaction, role_name: str):
         
     await interaction.user.add_roles(modelRole)
     await interaction.response.send_message(f"You received the role {role_name}", ephemeral=True, delete_after=settings.DELETE_AFTER)
-    
-#Delete role
-@app_commands.checks.has_permissions(manage_roles=True)
-@app_commands.default_permissions(manage_roles=True)
-@client.tree.command(name="d-role", description="Deletes a role", guilds=[settings.GUILD_ID_DEV])
-async def executeCommand(interaction: discord.Interaction, role_name: str):
-    modelRole = getRoleByName(interaction.guild, role_name)
-    if modelRole is None:
-        await interaction.response.send_message(f"_Role {role_name} does not exist!_", ephemeral=True, delete_after=settings.DELETE_AFTER)
-        
-    await modelRole.delete()
-    await interaction.response.send_message(f"_{role_name} deleted!_ 🚮", ephemeral=True, delete_after=settings.DELETE_AFTER)
         
 @client.tree.command(
     name="ci", 
     description="Clocks you in. Use in model text channel to clock in for that model.", 
-    guilds=[settings.GUILD_ID_DEV, settings.GUILD_ID_PROD]
+    guilds=[settings.GUILD_ID]
 )
 async def ciCommand(interaction: discord.Interaction):
     await interaction.response.defer(ephemeral=False)  # Prevents interaction expiration
@@ -207,7 +192,7 @@ async def ciCommand(interaction: discord.Interaction):
                 asyncio.create_task(delete_message_after_delay(message, settings.DELETE_AFTER))
                 return
             
-            newChannelName = f"{channel.name}, {username}" if channel.name[-1] != '-' else f"✅{channel.name[1:]} {username}"
+            newChannelName = f"{channel.name}, {username}" if channel.name[-1] != '-' else f"{settings.TICK_EMOJI}{channel.name[1:]} {username}"
             await channel.edit(name=newChannelName)
 
             try:
@@ -228,13 +213,11 @@ async def ciCommand(interaction: discord.Interaction):
 async def on_clock_command_error(interaction: discord.Interaction, error: discord.app_commands.AppCommandError) -> None:
     if str(error).__contains__("RateLimited"):
         await interaction.response.send_message("_Please wait at least **10** minutes before clocking in!_", ephemeral=True, delete_after=settings.DELETE_AFTER)
-    
-import asyncio
 
 @client.tree.command(
     name="co", 
     description="Clocks you out. Use in model text channel to clock out for that model.", 
-    guilds=[settings.GUILD_ID_DEV, settings.GUILD_ID_PROD]
+    guilds=[settings.GUILD_ID]
 )
 async def coCommand(interaction: discord.Interaction):
     await interaction.response.defer(ephemeral=False)  # Prevents interaction expiration
@@ -251,7 +234,7 @@ async def coCommand(interaction: discord.Interaction):
                 usernames.remove(username)
                 
                 if len(usernames) == 0:
-                    newChannelName = "❌" + getBaseChannelName(channel.name)[1:] + " -"
+                    newChannelName = settings.CROSS_EMOJI + getBaseChannelName(channel.name)[1:] + " -"
                 else:
                     newChannelName = getBaseChannelName(channel.name) + " - " + ', '.join(usernames)
                     
@@ -279,7 +262,7 @@ async def on_clock_command_error(interaction: discord.Interaction, error: discor
         
 @app_commands.checks.has_permissions(manage_channels=True)
 @app_commands.default_permissions(manage_channels=True)
-@client.tree.command(name="co-all", description="Clocks everyone from vc. Use in model text channel to clock everyone out for that model.", guilds=[settings.GUILD_ID_DEV, settings.GUILD_ID_PROD])
+@client.tree.command(name="co-all", description="Clocks everyone from vc. Use in model text channel to clock everyone out for that model.", guilds=[settings.GUILD_ID])
 async def coallCommand(interaction: discord.Interaction):
     await interaction.response.send_message(f"Processing, please wait...")  # Send initial response
     
@@ -288,7 +271,7 @@ async def coallCommand(interaction: discord.Interaction):
     
     for channel in clockInCategory.channels:
         if isinstance(channel, discord.VoiceChannel) and modelName in channel.name.lower():
-            newChannelName = "❌" + getBaseChannelName(channel.name)[1:] + " -"
+            newChannelName = settings.CROSS_EMOJI + getBaseChannelName(channel.name)[1:] + " -"
             await channel.edit(name=newChannelName)
     
     message = await interaction.followup.send(f"_Everyone is now clocked out from {modelName}._", ephemeral=True)
@@ -301,7 +284,7 @@ async def on_clock_command_error(interaction: discord.Interaction, error: discor
         await interaction.response.send_message("_Please wait at least **10** minutes before clocking everyone out!_", ephemeral=True, delete_after=settings.DELETE_AFTER)
     
 ### MMA ###
-@client.tree.command(name="mma", description="Submit MM for approval", guilds=[settings.GUILD_ID_DEV, settings.GUILD_ID_PROD])
+@client.tree.command(name="mma", description="Submit MM for approval", guilds=[settings.GUILD_ID])
 async def report(interaction: discord.Interaction):
     if not interaction.channel.name.lower().__contains__("-staff-chat"):
         await interaction.response.send_message(f"_Please submit mms in staff chat model channel._", ephemeral=True, delete_after=settings.DELETE_AFTER)
@@ -309,7 +292,7 @@ async def report(interaction: discord.Interaction):
     await interaction.response.send_modal(massmsg.MassMessageModal())
     
 ### CUSTOMS ###
-@client.tree.command(name="cs", description="Submit custom for review", guilds=[settings.GUILD_ID_DEV, settings.GUILD_ID_PROD])
+@client.tree.command(name="cs", description="Submit custom for review", guilds=[settings.GUILD_ID])
 async def report(interaction: discord.Interaction):
     if not interaction.channel.name.lower().__contains__("-customs"):
         await interaction.response.send_message(f"_Please submit cs in customs model channel._", ephemeral=True, delete_after=settings.DELETE_AFTER)
@@ -317,7 +300,7 @@ async def report(interaction: discord.Interaction):
     await interaction.response.send_modal(customs.CustomsModal())
     
 ### VOICE ###
-@client.tree.command(name="voice", description="Submit voice for review", guilds=[settings.GUILD_ID_DEV, settings.GUILD_ID_PROD])
+@client.tree.command(name="voice", description="Submit voice for review", guilds=[settings.GUILD_ID])
 async def report(interaction: discord.Interaction):
     if not interaction.channel.name.lower().__contains__("-staff-chat"):
         await interaction.response.send_message(f"_Please submit voice in staff chat model channel._", ephemeral=True, delete_after=settings.DELETE_AFTER)
@@ -325,7 +308,7 @@ async def report(interaction: discord.Interaction):
     await interaction.response.send_modal(voice.VoiceModal())
     
 ### LEAKS ###
-@client.tree.command(name="leaks", description="Submit a leak", guilds=[settings.GUILD_ID_DEV, settings.GUILD_ID_PROD])
+@client.tree.command(name="leaks", description="Submit a leak", guilds=[settings.GUILD_ID])
 async def report(interaction: discord.Interaction):
     if not interaction.channel.name.lower().__contains__("-staff-chat"):
         await interaction.response.send_message(f"_Please submit leak in staff chat model channel._", ephemeral=True, delete_after=settings.DELETE_AFTER)
@@ -333,7 +316,7 @@ async def report(interaction: discord.Interaction):
     await interaction.response.send_modal(leaks.LeakModal())
     
 ### FINES ###
-@client.tree.command(name="my-fines", description="Shows the list of you fines", guilds=[settings.GUILD_ID_DEV, settings.GUILD_ID_PROD])
+@client.tree.command(name="my-fines", description="Shows the list of you fines", guilds=[settings.GUILD_ID])
 async def report(interaction: discord.Interaction):
     if not interaction.channel.name.lower().__contains__("fines"):
         await interaction.response.send_message(f"_Please use the command in the fines channel_", ephemeral=True, delete_after=settings.DELETE_AFTER)
@@ -349,7 +332,7 @@ async def report(interaction: discord.Interaction):
 
 @app_commands.checks.has_permissions(manage_channels=True)
 @app_commands.default_permissions(manage_channels=True)
-@client.tree.command(name="fines", description="Shows the list of fines for given user, provide discord nick", guilds=[settings.GUILD_ID_DEV, settings.GUILD_ID_PROD])
+@client.tree.command(name="fines", description="Shows the list of fines for given user, provide discord nick", guilds=[settings.GUILD_ID])
 async def report(interaction: discord.Interaction, username: str):
     if not interaction.channel.name.lower().__contains__("fines"):
         await interaction.response.send_message(f"_Please use the command in the fines channel_", ephemeral=True, delete_after=settings.DELETE_AFTER)
@@ -365,7 +348,7 @@ async def report(interaction: discord.Interaction, username: str):
    
 @app_commands.checks.has_permissions(manage_channels=True)
 @app_commands.default_permissions(manage_channels=True) 
-@client.tree.command(name="fine", description="Opens a form to fine a user", guilds=[settings.GUILD_ID_DEV, settings.GUILD_ID_PROD])
+@client.tree.command(name="fine", description="Opens a form to fine a user", guilds=[settings.GUILD_ID])
 async def report(interaction: discord.Interaction):
     managementRole = util.getManagementRole(interaction)
     consultantRole = util.getConsultRole(interaction)
@@ -381,8 +364,8 @@ async def report(interaction: discord.Interaction):
         return
     await interaction.response.send_modal(fine.FineModal())
 
-### FINES ###
-@client.tree.command(name="my-referrals", description="Shows the list of you referrals", guilds=[settings.GUILD_ID_DEV, settings.GUILD_ID_PROD])
+### REFERRALS ###
+@client.tree.command(name="my-referrals", description="Shows the list of you referrals", guilds=[settings.GUILD_ID])
 async def report(interaction: discord.Interaction):
     referrals = sheets.getUserReferrals(interaction.user.name)
     message = "_You don't have any referrals._"
@@ -394,7 +377,7 @@ async def report(interaction: discord.Interaction):
     
 @app_commands.checks.has_permissions(manage_channels=True)
 @app_commands.default_permissions(manage_channels=True)
-@client.tree.command(name="referrals", description="Shows the list of referrals for given user, provide discord nick", guilds=[settings.GUILD_ID_DEV, settings.GUILD_ID_PROD])
+@client.tree.command(name="referrals", description="Shows the list of referrals for given user, provide discord nick", guilds=[settings.GUILD_ID])
 async def report(interaction: discord.Interaction, username: str):
     referrals = sheets.getUserReferrals(username)
     message = "_That user doesn't have any referrals._"
@@ -409,7 +392,7 @@ async def report(interaction: discord.Interaction, username: str):
 @client.tree.command(
     name="add-referral", 
     description="Adds the referral to employee. Please provide employee discord nick and referral discord nick.", 
-    guilds=[settings.GUILD_ID_DEV, settings.GUILD_ID_PROD]
+    guilds=[settings.GUILD_ID]
 )
 async def addReferral(interaction: discord.Interaction, employee_nick: str, referral_nick: str):
     await interaction.response.defer(ephemeral=True)  # Prevents interaction expiration
@@ -431,6 +414,75 @@ async def addReferral(interaction: discord.Interaction, employee_nick: str, refe
     
     msg = await interaction.followup.send(message)
     asyncio.create_task(delete_message_after_delay(msg, settings.DELETE_AFTER))
+    
+### MANAGEMENT CI/CO ###
+
+# Create channels for manager
+@client.tree.command(
+    name="setup-channels", 
+    description="Creates a form to setup channels needed for management type role",
+    guilds=[settings.M_GUILD_ID]
+)
+async def setupManager(interaction: discord.Interaction): 
+    await interaction.response.send_message(f"Setup channel:", ephemeral=True, view=management.SetupView(interaction))
+    
+@client.tree.command(
+    name="ci", 
+    description="Clocks you in",
+    guilds=[settings.M_GUILD_ID]
+)
+async def clockIn(interaction: discord.Interaction):
+    if not interaction.channel.name.lower().__contains__(interaction.user.name):
+        await interaction.response.send_message(f"You are not this user!", delete_after=settings.DELETE_AFTER, ephemeral=True)
+        return
+        
+    if interaction.channel.name[-1] == settings.CROSS_EMOJI:
+        await interaction.channel.edit(name=interaction.channel.name[:-1] + settings.TICK_EMOJI)
+        
+        try:
+            with open("clocklog.txt", "a") as file:
+                now = datetime.datetime.now()
+                datetime_string = now.strftime("%Y-%m-%d %H:%M:%S")
+                file.write(f"CI [{datetime_string}] - username: {interaction.user.name} - role: {interaction.channel.category.name}\n")
+        except:
+            log.warning("Error logging ci to file")
+        
+        await interaction.response.send_message(f"Clocked in successfully!", delete_after=settings.DELETE_AFTER, ephemeral=True)
+        return
+    elif interaction.channel.name[-1] == settings.TICK_EMOJI:
+        await interaction.response.send_message(f"Already clocked in!", delete_after=settings.DELETE_AFTER, ephemeral=True)
+        return
+    else:
+        await interaction.response.send_message(f"Wrong channel for clocking in!", delete_after=settings.DELETE_AFTER, ephemeral=True)
+
+@client.tree.command(
+    name="co", 
+    description="Clocks you out",
+    guilds=[settings.M_GUILD_ID]
+)
+async def clockOut(interaction: discord.Interaction):
+    if not interaction.channel.name.lower().__contains__(interaction.user.name):
+        await interaction.response.send_message(f"You are not this user!", delete_after=settings.DELETE_AFTER, ephemeral=True)
+        return
+    
+    if interaction.channel.name[-1] == settings.TICK_EMOJI:
+        await interaction.channel.edit(name=interaction.channel.name[:-1] + settings.CROSS_EMOJI)
+        
+        try:
+            with open("clocklog.txt", "a") as file:
+                now = datetime.datetime.now()
+                datetime_string = now.strftime("%Y-%m-%d %H:%M:%S")
+                file.write(f"CO [{datetime_string}] - username: {interaction.user.name} - role: {interaction.channel.category.name}\n")
+        except:
+            log.warning("Error logging co to file")
+        
+        await interaction.response.send_message(f"Clocked out successfully!", delete_after=settings.DELETE_AFTER, ephemeral=True)
+        return
+    elif interaction.channel.name[-1] == settings.CROSS_EMOJI:
+        await interaction.response.send_message(f"Already clocked out!", delete_after=settings.DELETE_AFTER, ephemeral=True)
+        return
+    else:
+        await interaction.response.send_message(f"Wrong channel for clocking out!", delete_after=settings.DELETE_AFTER, ephemeral=True)
     
         
 #RUN BOT
