@@ -1,7 +1,7 @@
 import discord
 import settings
 
-def findChannelsByNameInCategory(category: discord.CategoryChannel, word: str) -> list[discord.VoiceChannel | discord.TextChannel]:
+def findChannelsByNameInCategory(category: discord.CategoryChannel, word: str) -> list[discord.TextChannel]:
     channels = []
     for channel in category.channels:
         if channel.name.lower().__contains__(word.lower()):  # Case-insensitive search
