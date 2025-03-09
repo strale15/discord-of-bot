@@ -1,9 +1,20 @@
 import discord
 import settings
 
+def findChannelsByNameInCategory(category: discord.CategoryChannel, word: str) -> list[discord.VoiceChannel | discord.TextChannel]:
+    channels = []
+    for channel in category.channels:
+        if channel.name.lower().__contains__(word.lower()):  # Case-insensitive search
+            channels.append(channel)
+            
+    if len(channels) == 0:
+        return None
+    
+    return channels
+
 def getCategoryByName(guild: discord.Guild, categoryName: str) -> discord.CategoryChannel:
     for category in guild.categories:
-        if category.name.lower() == categoryName.lower():
+        if category.name.lower().__contains__(categoryName.lower()):
             return category
     return None
 
@@ -31,66 +42,26 @@ def getMemberByUser(interaction: discord.Interaction, userId: int) -> discord.Me
     return interaction.guild.get_member(userId)
 
 def getMmaApprovalChannel(interaction: discord.Interaction) -> discord.TextChannel:
-    if interaction.guild_id == settings.GUILD_ID_INT_DEV:
-        return discord.utils.get(interaction.guild.channels, id=settings.MMA_APPROVAL_ID_DEV)
-    elif interaction.guild_id == settings.GUILD_ID_INT_PROD:
-        return discord.utils.get(interaction.guild.channels, id=settings.MMA_APPROVAL_ID_PROD)
-    else:
-        return None
+        return discord.utils.get(interaction.guild.channels, id=settings.MMA_APPROVAL_ID)
     
 def getCsApprovalChannel(interaction: discord.Interaction) -> discord.TextChannel:
-    if interaction.guild_id == settings.GUILD_ID_INT_DEV:
-        return discord.utils.get(interaction.guild.channels, id=settings.CUSTOMS_QUEUE_ID_DEV)
-    elif interaction.guild_id == settings.GUILD_ID_INT_PROD:
-        return discord.utils.get(interaction.guild.channels, id=settings.CUSTOMS_QUEUE_ID_PROD)
-    else:
-        return None
+    return discord.utils.get(interaction.guild.channels, id=settings.CUSTOMS_QUEUE_ID)
 
 def getVoiceQueueChannel(interaction: discord.Interaction) -> discord.TextChannel:
-    if interaction.guild_id == settings.GUILD_ID_INT_DEV:
-        return discord.utils.get(interaction.guild.channels, id=settings.VOICE_QUEUE_ID_DEV)
-    elif interaction.guild_id == settings.GUILD_ID_INT_PROD:
-        return discord.utils.get(interaction.guild.channels, id=settings.VOICE_QUEUE_ID_PROD)
-    else:
-        return None
+    return discord.utils.get(interaction.guild.channels, id=settings.VOICE_QUEUE_ID)
     
 def getLeaksChannel(interaction: discord.Interaction) -> discord.TextChannel:
-    if interaction.guild_id == settings.GUILD_ID_INT_DEV:
-        return discord.utils.get(interaction.guild.channels, id=settings.LEAKS_QUEUE_ID_DEV)
-    elif interaction.guild_id == settings.GUILD_ID_INT_PROD:
-        return discord.utils.get(interaction.guild.channels, id=settings.LEAKS_QUEUE_ID_PROD)
-    else:
-        return None
+    return discord.utils.get(interaction.guild.channels, id=settings.LEAKS_QUEUE_ID)
     
 def getConsultRole(interaction: discord.Interaction) -> discord.Role:
-    if interaction.guild_id == settings.GUILD_ID_INT_DEV:
-        return discord.utils.get(interaction.guild.roles, id=settings.CONSULT_ID_DEV)
-    elif interaction.guild_id == settings.GUILD_ID_INT_PROD:
-        return discord.utils.get(interaction.guild.roles, id=settings.CONSULT_ID_PROD)
-    else:
-        return None
+    return discord.utils.get(interaction.guild.roles, id=settings.CONSULT_ID)
     
 def getManagementRole(interaction: discord.Interaction) -> discord.Role:
-    if interaction.guild_id == settings.GUILD_ID_INT_DEV:
-        return discord.utils.get(interaction.guild.roles, id=settings.MANAGEMENT_ROLE_ID_DEV)
-    elif interaction.guild_id == settings.GUILD_ID_INT_PROD:
-        return discord.utils.get(interaction.guild.roles, id=settings.MANAGEMENT_ROLE_ID_PROD)
-    else:
-        return None
+    return discord.utils.get(interaction.guild.roles, id=settings.MANAGEMENT_ROLE_ID)
     
 def getSupervisorRole(interaction: discord.Interaction) -> discord.Role:
-    if interaction.guild_id == settings.GUILD_ID_INT_DEV:
-        return discord.utils.get(interaction.guild.roles, id=settings.SUPERVISOR_ID_DEV)
-    elif interaction.guild_id == settings.GUILD_ID_INT_PROD:
-        return discord.utils.get(interaction.guild.roles, id=settings.SUPERVISOR_ID_PROD)
-    else:
-        return None
+    return discord.utils.get(interaction.guild.roles, id=settings.SUPERVISOR_ID)
     
 def getPPVEngRole(interaction: discord.Interaction) -> discord.Role:
-    if interaction.guild_id == settings.GUILD_ID_INT_DEV:
-        return discord.utils.get(interaction.guild.roles, id=settings.PPV_ENG_ID_DEV)
-    elif interaction.guild_id == settings.GUILD_ID_INT_PROD:
-        return discord.utils.get(interaction.guild.roles, id=settings.PPV_ENG_ID_PROD)
-    else:
-        return None
+    return discord.utils.get(interaction.guild.roles, id=settings.PPV_ENG_ID)
     

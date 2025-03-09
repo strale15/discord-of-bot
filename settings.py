@@ -18,39 +18,30 @@ COGS_DIR = BASE_DIR / "cogs"
 
 VIDEOCMDS_DIR = BASE_DIR / "videocmds"
 
+CROSS_EMOJI = "❌"
+TICK_EMOJI = "✅"
+
 DELETE_AFTER = int(os.getenv("DELETE_AFTER"))
 
 SHEET_ID = os.getenv("SHEET_ID")
 
-#DEV
-GUILD_ID_INT_DEV = int(os.getenv("GUILD_ID_DEV"))
-GUILD_ID_DEV = discord.Object(id=GUILD_ID_INT_DEV)
-
-MMA_APPROVAL_ID_DEV = int(os.getenv("MMA_APPROVAL_ID_DEV"))
-CUSTOMS_QUEUE_ID_DEV = int(os.getenv("CUSTOMS_QUEUE_ID_DEV"))
-VOICE_QUEUE_ID_DEV = int(os.getenv("VOICE_QUEUE_ID_DEV"))
-LEAKS_QUEUE_ID_DEV = int(os.getenv("LEAKS_QUEUE_ID_DEV"))
-FINES_CHANNEL_ID_DEV = int(os.getenv("FINES_CHANNEL_ID_DEV"))
-
-CONSULT_ID_DEV = int(os.getenv("CONSULT_ID_DEV"))
-SUPERVISOR_ID_DEV = int(os.getenv("SUPERVISOR_ID_DEV"))
-PPV_ENG_ID_DEV = int(os.getenv("PPV_ENG_ID_DEV"))
-MANAGEMENT_ROLE_ID_DEV = int(os.getenv("MANAGEMENT_ROLE_ID_DEV"))
-
 #PROD
-GUILD_ID_INT_PROD = int(os.getenv("GUILD_ID_PROD"))
-GUILD_ID_PROD = discord.Object(id=GUILD_ID_INT_PROD)
+GUILD_ID_INT = int(os.getenv("GUILD_ID"))
+GUILD_ID = discord.Object(id=GUILD_ID_INT)
 
-MMA_APPROVAL_ID_PROD = int(os.getenv("MMA_APPROVAL_ID_PROD"))
-CUSTOMS_QUEUE_ID_PROD = int(os.getenv("CUSTOMS_QUEUE_ID_PROD"))
-VOICE_QUEUE_ID_PROD = int(os.getenv("VOICE_QUEUE_ID_PROD"))
-LEAKS_QUEUE_ID_PROD = int(os.getenv("LEAKS_QUEUE_ID_PROD"))
-FINES_CHANNEL_ID_PROD = int(os.getenv("FINES_CHANNEL_ID_PROD"))
+M_GUILD_ID_INT = int(os.getenv("M_GUILD_ID"))
+M_GUILD_ID = discord.Object(id=M_GUILD_ID_INT)
 
-CONSULT_ID_PROD = int(os.getenv("CONSULT_ID_PROD"))
-SUPERVISOR_ID_PROD = int(os.getenv("SUPERVISOR_ID_PROD"))
-PPV_ENG_ID_PROD = int(os.getenv("PPV_ENG_ID_PROD"))
-MANAGEMENT_ROLE_ID_PROD = int(os.getenv("MANAGEMENT_ROLE_ID_PROD"))
+MMA_APPROVAL_ID = int(os.getenv("MMA_APPROVAL_ID"))
+CUSTOMS_QUEUE_ID = int(os.getenv("CUSTOMS_QUEUE_ID"))
+VOICE_QUEUE_ID = int(os.getenv("VOICE_QUEUE_ID"))
+LEAKS_QUEUE_ID = int(os.getenv("LEAKS_QUEUE_ID"))
+FINES_CHANNEL_ID = int(os.getenv("FINES_CHANNEL_ID"))
+
+CONSULT_ID = int(os.getenv("CONSULT_ID"))
+SUPERVISOR_ID = int(os.getenv("SUPERVISOR_ID"))
+PPV_ENG_ID = int(os.getenv("PPV_ENG_ID"))
+MANAGEMENT_ROLE_ID = int(os.getenv("MANAGEMENT_ROLE_ID"))
 
 LOGGING_CONFIG = {
     "version": 1,
