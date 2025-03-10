@@ -1,22 +1,28 @@
 import discord
 import settings
 
-def findChannelsByNameInCategory(category: discord.CategoryChannel, username: str) -> list[discord.TextChannel]:
-    channels = []
+async def findClockInChannelByUsername(guild: discord.Guild, username: str) -> discord.TextChannel:
     username = username.replace(" ", "-").lower()
     
-    for channel in category.channels:
-        if channel.name.lower().__contains__(username):  # Case-insensitive search
-            channels.append(channel)
-            
-    if len(channels) == 0:
-        return None
+    channelsToCheck = await getAllManagementClockInCategories(guild)
     
-    return channels
+    for channel in channelsToCheck:
+        if channel.name[:-2].lower() == (username):
+            return channel
+            
+    return None
+
+async def getAllManagementClockInCategories(guild: discord.Guild):
+    supervisor_category = await guild.fetch_channel(settings.M_SUPERVISOR_CLOCK_CATEGORY)
+    consultant_category = await guild.fetch_channel(settings.M_CONSULTANT_CLOCK_CATEGORY)
+    management_category = await guild.fetch_channel(settings.M_MANAGEMENT_CLOCK_CATEGORY)
+    mppv_category = await guild.fetch_channel(settings.M_MPPV_ENG_CLOCK_CATEGORY)
+    
+    return supervisor_category.channels + consultant_category.channels + management_category.channels + mppv_category.channels
 
 def interactionChannelContainsUserName(interaction: discord.Interaction) -> bool:
     username = interaction.user.display_name.replace(" ", "-").lower()
-    return interaction.channel.name.lower().__contains__(username)
+    return interaction.channel.name[:-2].lower() == (username)
 
 def getCategoryByName(guild: discord.Guild, categoryName: str) -> discord.CategoryChannel:
     for category in guild.categories:
@@ -41,14 +47,11 @@ def getClockedInUsernames(channelName: str) -> list:
 def getBaseChannelName(channelName: str) -> str:
     return channelName.split('-')[0].strip()
 
-def getMember(interaction: discord.Interaction) -> discord.Member:
-    return interaction.guild.get_member(interaction.user.id)
-
 def getMemberByUser(interaction: discord.Interaction, userId: int) -> discord.Member:
     return interaction.guild.get_member(userId)
 
 def getMmaApprovalChannel(interaction: discord.Interaction) -> discord.TextChannel:
-        return discord.utils.get(interaction.guild.channels, id=settings.MMA_APPROVAL_ID)
+    return discord.utils.get(interaction.guild.channels, id=settings.MMA_APPROVAL_ID)
     
 def getCsApprovalChannel(interaction: discord.Interaction) -> discord.TextChannel:
     return discord.utils.get(interaction.guild.channels, id=settings.CUSTOMS_QUEUE_ID)

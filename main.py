@@ -424,7 +424,7 @@ async def addReferral(interaction: discord.Interaction, employee_nick: str, refe
     guilds=[settings.M_GUILD_ID]
 )
 async def setupManager(interaction: discord.Interaction): 
-    await interaction.response.send_message(f"Setup channel:", ephemeral=True, delete_after=300, view=management.SetupView(interaction))
+    await interaction.response.send_message(f"Setup channel:", ephemeral=True, delete_after=300, view=management.SetupView(interaction, log))
     
 @client.tree.command(
     name="ci", 
