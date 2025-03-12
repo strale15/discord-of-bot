@@ -1,28 +1,31 @@
+import dis
 import discord
 import settings
 
-async def findClockInChannelByUsername(guild: discord.Guild, username: str) -> discord.TextChannel:
-    username = username.replace(" ", "-").lower()
+def getUserClockInChannel(user: discord.Member) -> discord.VoiceChannel:
+    guild = user.guild
+    userRoles = user.roles
     
-    channelsToCheck = await getAllManagementClockInCategories(guild)
+    consultantRole = guild.get_role(settings.M_CONSULTANT_ROLE_ID)
+    managementRole = guild.get_role(settings.M_MANAGEMENT_ROLE_ID)
+    supervisorRole = guild.get_role(settings.M_SUPERVISOR_ROLE_ID)
+    ppvEngRole = guild.get_role(settings.M_PPV_ENG_ROLE_ID)
     
-    for channel in channelsToCheck:
-        if channel.name[:-2].lower() == (username):
-            return channel
-            
-    return None
-
-async def getAllManagementClockInCategories(guild: discord.Guild):
-    supervisor_category = await guild.fetch_channel(settings.M_SUPERVISOR_CLOCK_CATEGORY)
-    consultant_category = await guild.fetch_channel(settings.M_CONSULTANT_CLOCK_CATEGORY)
-    management_category = await guild.fetch_channel(settings.M_MANAGEMENT_CLOCK_CATEGORY)
-    mppv_category = await guild.fetch_channel(settings.M_MPPV_ENG_CLOCK_CATEGORY)
+    consultantChannel = guild.get_channel(settings.M_CONSULTANT_CLOCK_CHANNEL)
+    managementChannel = guild.get_channel(settings.M_MANAGEMENT_CLOCK_CHANNEL)
+    supervisorChannel = guild.get_channel(settings.M_SUPERVISOR_CLOCK_CHANNEL)
+    ppvEngChannel = guild.get_channel(settings.M_PPV_ENG_CLOCK_CHANNEL)
     
-    return supervisor_category.channels + consultant_category.channels + management_category.channels + mppv_category.channels
-
-def interactionChannelContainsUserName(interaction: discord.Interaction) -> bool:
-    username = interaction.user.display_name.replace(" ", "-").lower()
-    return interaction.channel.name[:-2].lower() == (username)
+    if consultantRole in userRoles:
+        return consultantChannel
+    elif managementRole in userRoles:
+        return managementChannel
+    elif supervisorRole in userRoles:
+        return supervisorChannel
+    elif ppvEngRole in userRoles:
+        return ppvEngChannel
+    else:
+        return None
 
 def getCategoryByName(guild: discord.Guild, categoryName: str) -> discord.CategoryChannel:
     for category in guild.categories:
@@ -43,6 +46,13 @@ def getClockedInUsernames(channelName: str) -> list:
     allUsers = channelName.split('-')[1].strip()
     usernames = allUsers.split(',')
     return [username.strip() for username in usernames]
+
+def checkIfUserIsClockedIn(user: discord.Member, channelName: str) -> bool:
+    clockedInUsers = getClockedInUsernames(channelName)
+    if clockedInUsers is None:
+        return False
+    
+    return user.display_name in clockedInUsers
 
 def getBaseChannelName(channelName: str) -> str:
     return channelName.split('-')[0].strip()

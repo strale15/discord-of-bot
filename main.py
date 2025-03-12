@@ -6,7 +6,7 @@ from discord import HTTPException, app_commands
 import asyncio
 
 import settings
-from classes import massmsg, customs, formats, voice, leaks, sheets, fine, management
+from classes import massmsg, customs, formats, voice, leaks, sheets, fine
 from util import *
 import util
 
@@ -187,7 +187,7 @@ async def ciCommand(interaction: discord.Interaction):
     
     for channel in clockInCategory.channels:
         if isinstance(channel, discord.VoiceChannel) and modelName in channel.name.lower():
-            if username in channel.name:
+            if util.checkIfUserIsClockedIn(interaction.user, channel.name):
                 message = await interaction.followup.send(f"_You are already clocked in._", ephemeral=True)
                 asyncio.create_task(delete_message_after_delay(message, settings.DELETE_AFTER))
                 return
@@ -227,29 +227,28 @@ async def coCommand(interaction: discord.Interaction):
     username = interaction.user.display_name
     
     for channel in clockInCategory.channels:
-        if isinstance(channel, discord.VoiceChannel) and modelName in channel.name.lower():
-            if username in channel.name:
-                # Remove username from channel name
-                usernames = getClockedInUsernames(channel.name)
-                usernames.remove(username)
+        if isinstance(channel, discord.VoiceChannel) and modelName in channel.name.lower() and util.checkIfUserIsClockedIn(interaction.user, channel.name):
+            # Remove username from channel name
+            usernames = getClockedInUsernames(channel.name)
+            usernames.remove(username)
+            
+            if len(usernames) == 0:
+                newChannelName = settings.CROSS_EMOJI + getBaseChannelName(channel.name)[1:] + " -"
+            else:
+                newChannelName = getBaseChannelName(channel.name) + " - " + ', '.join(usernames)
                 
-                if len(usernames) == 0:
-                    newChannelName = settings.CROSS_EMOJI + getBaseChannelName(channel.name)[1:] + " -"
-                else:
-                    newChannelName = getBaseChannelName(channel.name) + " - " + ', '.join(usernames)
-                    
-                await channel.edit(name=newChannelName)
-                try:
-                    with open("clocklog.txt", "a") as file:
-                        now = datetime.datetime.now()
-                        datetime_string = now.strftime("%Y-%m-%d %H:%M:%S")
-                        file.write(f"CO [{datetime_string}] - username: {interaction.user.name} - model: {modelName}\n")
-                except:
-                    log.warning("Error logging co to file")
-                
-                message = await interaction.followup.send(f"You are now clocked out of _{modelName}_.", ephemeral=False)
-                asyncio.create_task(delete_message_after_delay(message, settings.DELETE_AFTER))
-                return
+            await channel.edit(name=newChannelName)
+            try:
+                with open("clocklog.txt", "a") as file:
+                    now = datetime.datetime.now()
+                    datetime_string = now.strftime("%Y-%m-%d %H:%M:%S")
+                    file.write(f"CO [{datetime_string}] - username: {interaction.user.name} - model: {modelName}\n")
+            except:
+                log.warning("Error logging co to file")
+            
+            message = await interaction.followup.send(f"You are now clocked out of _{modelName}_.", ephemeral=False)
+            asyncio.create_task(delete_message_after_delay(message, settings.DELETE_AFTER))
+            return
             
     message = await interaction.followup.send(f"_You are not clocked in on any model._", ephemeral=True)
     asyncio.create_task(delete_message_after_delay(message, settings.DELETE_AFTER))
@@ -416,74 +415,64 @@ async def addReferral(interaction: discord.Interaction, employee_nick: str, refe
     asyncio.create_task(delete_message_after_delay(msg, settings.DELETE_AFTER))
     
 ### MANAGEMENT CI/CO ###
-
-# Create channels for manager
-@client.tree.command(
-    name="setup-channels", 
-    description="Creates a form to setup channels needed for management type role",
-    guilds=[settings.M_GUILD_ID]
-)
-async def setupManager(interaction: discord.Interaction): 
-    await interaction.response.send_message(f"Setup channel:", ephemeral=True, delete_after=300, view=management.SetupView(interaction, log))
-    
 @client.tree.command(
     name="ci", 
     description="Clocks you in",
     guilds=[settings.M_GUILD_ID]
 )
 async def clockIn(interaction: discord.Interaction):
-    if not util.interactionChannelContainsUserName(interaction):
-        await interaction.response.send_message(f"You are not this user!", delete_after=settings.DELETE_AFTER, ephemeral=True)
+    if not interaction.channel.name.__contains__("clock-in"):
+        await interaction.response.send_message(f"_Please use the clock in text channel_", ephemeral=True, delete_after=settings.DELETE_AFTER)
+        return
+    
+    clockInChannel = util.getUserClockInChannel(interaction.user)
+    if clockInChannel is None:
+        await interaction.response.send_message(f"_You do not have any management type role._", ephemeral=True, delete_after=settings.DELETE_AFTER)
         return
         
-    if interaction.channel.name[-1] == settings.CROSS_EMOJI:
-        await interaction.channel.edit(name=interaction.channel.name[:-1] + settings.TICK_EMOJI)
-        
-        try:
-            with open("clocklog.txt", "a") as file:
-                now = datetime.datetime.now()
-                datetime_string = now.strftime("%Y-%m-%d %H:%M:%S")
-                file.write(f"CI [{datetime_string}] - username: {interaction.user.display_name} - role: {interaction.channel.category.name}\n")
-        except:
-            log.warning("Error logging ci to file")
-        
-        await interaction.response.send_message(f"Clocked in successfully!", ephemeral=False)
+    #Add user to channel name
+    if util.checkIfUserIsClockedIn(interaction.user, clockInChannel.name):
+        await interaction.response.send_message(f"_You are already clocked in._", ephemeral=True, delete_after=settings.DELETE_AFTER)
         return
-    elif interaction.channel.name[-1] == settings.TICK_EMOJI:
-        await interaction.response.send_message(f"Already clocked in!", delete_after=settings.DELETE_AFTER, ephemeral=True)
-        return
-    else:
-        await interaction.response.send_message(f"Wrong channel for clocking in!", delete_after=settings.DELETE_AFTER, ephemeral=True)
-
+    
+    username = interaction.user.display_name
+    newChannelName = f"{clockInChannel.name}, {username}" if clockInChannel.name[-1] != '-' else f"{settings.TICK_EMOJI}{clockInChannel.name[1:]} {username}"
+    await clockInChannel.edit(name=newChannelName)
+    
+    await interaction.response.send_message(f"You are now clocked in", ephemeral=False)
+    
 @client.tree.command(
     name="co", 
     description="Clocks you out",
     guilds=[settings.M_GUILD_ID]
 )
 async def clockOut(interaction: discord.Interaction):
-    if not util.interactionChannelContainsUserName(interaction):
-        await interaction.response.send_message(f"You are not this user!", delete_after=settings.DELETE_AFTER, ephemeral=True)
+    if not interaction.channel.name.__contains__("clock-in"):
+        await interaction.response.send_message(f"_Please use the clock in text channel_", ephemeral=True, delete_after=settings.DELETE_AFTER)
         return
     
-    if interaction.channel.name[-1] == settings.TICK_EMOJI:
-        await interaction.channel.edit(name=interaction.channel.name[:-1] + settings.CROSS_EMOJI)
-        
-        try:
-            with open("clocklog.txt", "a") as file:
-                now = datetime.datetime.now()
-                datetime_string = now.strftime("%Y-%m-%d %H:%M:%S")
-                file.write(f"CO [{datetime_string}] - username: {interaction.user.display_name} - role: {interaction.channel.category.name}\n")
-        except:
-            log.warning("Error logging co to file")
-        
-        await interaction.response.send_message(f"Clocked out successfully!", ephemeral=False)
+    clockInChannel = util.getUserClockInChannel(interaction.user)
+    if clockInChannel is None:
+        await interaction.response.send_message(f"_You do not have any management type role._", ephemeral=True, delete_after=settings.DELETE_AFTER)
         return
-    elif interaction.channel.name[-1] == settings.CROSS_EMOJI:
-        await interaction.response.send_message(f"Already clocked out!", delete_after=settings.DELETE_AFTER, ephemeral=True)
+    
+    if not util.checkIfUserIsClockedIn(interaction.user, clockInChannel.name):
+        await interaction.response.send_message(f"_You are already clocked out._", ephemeral=True, delete_after=settings.DELETE_AFTER)
         return
+    
+    username = interaction.user.display_name
+    
+    usernames = getClockedInUsernames(clockInChannel.name)
+    usernames.remove(username)
+    
+    if len(usernames) == 0:
+        newChannelName = settings.CROSS_EMOJI + getBaseChannelName(clockInChannel.name)[1:] + " -"
     else:
-        await interaction.response.send_message(f"Wrong channel for clocking out!", delete_after=settings.DELETE_AFTER, ephemeral=True)
+        newChannelName = getBaseChannelName(clockInChannel.name) + " - " + ', '.join(usernames)
+        
+    await clockInChannel.edit(name=newChannelName)
     
+    await interaction.response.send_message(f"You are now clocked out", ephemeral=False)
         
 #RUN BOT
 if __name__ == "__main__":
