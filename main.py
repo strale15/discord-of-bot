@@ -1,5 +1,6 @@
 import datetime
 from email.mime import message
+from venv import logger
 import discord
 from discord.ext import commands
 from discord import HTTPException, app_commands
@@ -9,15 +10,19 @@ import settings
 from classes import massmsg, customs, formats, voice, leaks, sheets, fine
 from util import *
 import util
+import schedule
 
 class MyClient(commands.Bot):
     async def on_ready(self):
         log.info(f'Logged on as {self.user}!')
         
+        self.scheduler = schedule.Scheduler(self, log)
+        
         try:
             synced = await self.tree.sync(guild=settings.GUILD_ID)
             syncedMan = await self.tree.sync(guild=settings.M_GUILD_ID)
-            log.info(f'Synced {len(synced)} commands and {len(syncedMan)} on mangement!')        
+            syncedAnn = await self.tree.sync(guild=settings.ANNOUNCEMENT_GUILD_ID)
+            log.info(f'Synced {len(synced)} commands, {len(syncedMan)} on management and {len(syncedAnn)} on announcement.')
         except Exception as e:
             log.info(f"Sync failed {e}")
             
