@@ -1,0 +1,6 @@
+## Off Day Requests ⏰
+As a reminder, any specific off day requests for cycle must be submitted through a ticket by 11:59pm EST Friday. 
+
+Specific days will only be granted with sufficient reasoning to maintain equality and integrity to all chatters. Those without sufficient reasoning will be granted a rotational off day, as with everyone who does not submit a ticket.
+
+-# If you wish to move to a 7 day work schedule, please open up a ticket stating such (by typing "$ticket" in any channel)

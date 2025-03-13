@@ -10,16 +10,19 @@ import settings
 from classes import massmsg, customs, formats, voice, leaks, sheets, fine
 from util import *
 import util
+import schedule
 
 class MyClient(commands.Bot):
     async def on_ready(self):
         log.info(f'Logged on as {self.user}!')
         
+        self.scheduler = schedule.Scheduler(self, log)
+        
         try:
             synced = await self.tree.sync(guild=settings.GUILD_ID)
             syncedMan = await self.tree.sync(guild=settings.M_GUILD_ID)
             syncedAnn = await self.tree.sync(guild=settings.ANNOUNCEMENT_GUILD_ID)
-            log.info(f'Synced {len(synced)} commands, {len(syncedMan)} on management and {len(syncedAnn)} on announcement.')        
+            log.info(f'Synced {len(synced)} commands, {len(syncedMan)} on management and {len(syncedAnn)} on announcement.')
         except Exception as e:
             log.info(f"Sync failed {e}")
             
@@ -475,29 +478,6 @@ async def clockOut(interaction: discord.Interaction):
     await clockInChannel.edit(name=newChannelName)
     
     await interaction.response.send_message(f"You are now clocked out", ephemeral=False)
-    
-#Announcement
-@client.tree.command(
-    name="announce", 
-    description="Announces a message",
-    guilds=[settings.ANNOUNCEMENT_GUILD_ID]
-)
-async def announce(interaction: discord.Interaction, msg: str):
-    try:
-        announcementChannel = interaction.guild.get_channel(settings.ANNOUNCEMENT_CHANNEL_ID)
-    except:
-        logger.error("Failed to get announcement channel")
-        await interaction.response.send_message(f"_Failed to get an announcement channel_", delete_after=settings.DELETE_AFTER, ephemeral=True)
-        return
-    
-    if not announcementChannel.is_news():
-        await interaction.response.send_message(f"_Channel is not an announcement channel_", delete_after=settings.DELETE_AFTER, ephemeral=True)
-        logger.error("Provided channel is not announcement channel")
-        return
-    
-    messageToPublish = await announcementChannel.send(msg)
-    await messageToPublish.publish()
-    await interaction.response.send_message(f"_Successfully published a message_", delete_after=settings.DELETE_AFTER, ephemeral=True)
         
 #RUN BOT
 if __name__ == "__main__":

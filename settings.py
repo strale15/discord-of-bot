@@ -58,6 +58,8 @@ ANNOUNCEMENT_GUILD_ID_INT = int(os.getenv("ANNOUNCEMENT_GUILD_ID"))
 ANNOUNCEMENT_GUILD_ID = discord.Object(id=ANNOUNCEMENT_GUILD_ID_INT)
 ANNOUNCEMENT_CHANNEL_ID = int(os.getenv("ANNOUNCEMENT_CHANNEL_ID"))
 
+OFF_DAY_SEND_TIME = os.getenv("OFF_DAY_SEND_TIME")
+
 LOGGING_CONFIG = {
     "version": 1,
     "disabled_existing_loggers": False,
