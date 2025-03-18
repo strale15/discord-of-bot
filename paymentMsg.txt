@@ -1,6 +1,10 @@
 ## Collecting Payment Info 💵
 
-It is the start of the month, which means payments are coming up! If this is your first time being paid by XIC, or your details have changed, please submit the appropriate information in the following format to **Jaron and Grello** in a ticket. Payments are expected to be sent around the 7th-10th of the month. If you are using crypto, submit the information over to **Marcc**.
+It is the start of the month, which means payments are coming up!
+Payments are expected to be sent around or before the 7th-10th of #month.
+
+If this is your first time being paid by *XIC*, or your details have changed, please submit the appropriate information in the following format to **A** in a ticket.
+If you are using crypto, submit the information over to **Jaron**.
 
 First Name:
 Last Name:

@@ -7,8 +7,15 @@ from datetime import datetime as dt
 import settings
 from discord.ext import commands
 import pytz
+import calendar
 
 timezone = pytz.timezone("America/Chicago")
+
+def replace_month_name(msg: str, now) -> str:
+    next_month_number = (now.month + 1) % 12
+    next_month_name = calendar.month_name[next_month_number]
+    
+    return msg.replace("#month", next_month_name)
 
 class Scheduler:
     def __init__(self, bot: commands.Bot, log: Logger):
@@ -35,9 +42,11 @@ class Scheduler:
             self.last_sent_minute_offday = None
             
         #Payment notice
-        if now.day == 25 and current_time == settings.PAYMENT_SEND_TIME and current_time != self.last_sent_minute_payment:
+        if now.day == settings.PAYMENT_SEND_DAY and current_time == settings.PAYMENT_SEND_TIME and current_time != self.last_sent_minute_payment:
             self.log.info(f"Entered a payment task at {now}")
-            await self.publish_announcement(msg=self.payment_msg)
+            
+            messageWithMonth = replace_month_name(self.payment_msg, now=now)
+            await self.publish_announcement(msg=messageWithMonth)
             self.last_sent_minute_payment = current_time
         elif current_time != self.last_sent_minute_payment:
             self.last_sent_minute_payment = None
