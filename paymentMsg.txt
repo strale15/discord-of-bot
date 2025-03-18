@@ -1,6 +1,6 @@
 ## Collecting Payment Info 💵
 
-It is the start of the month, which means payments are coming up!
+We are approaching the start of a new month, which means payments are coming up!
 Payments are expected to be sent around or before the 7th-10th of #month.
 
 If this is your first time being paid by *XIC*, or your details have changed, please submit the appropriate information in the following format to **A** in a ticket.
@@ -12,4 +12,4 @@ Email:
 Country:
 
 If you have any Fansly/Fanfix sales or any outstanding payments, please open a ticket to appropriately document it.
-Type "$ticket" in any channel to open a ticket.
+-# Type "$ticket" in any channel to open a ticket.
