@@ -108,5 +108,7 @@ class Scheduler:
         
         consultantRole = discord.utils.get(guild.roles, id=settings.CONSULT_ROLE_ID)
         managementRole = discord.utils.get(guild.roles, id=settings.MANAGEMENT_ROLE_ID)
+        supervisorRole = discord.utils.get(guild.roles, id=settings.SUPERVISOR_ROLE_ID)
+        ppvRole = discord.utils.get(guild.roles, id=settings.PPV_ENG_ROLE_ID)
         
-        await mm_channel.send(f"{consultantRole.mention} {managementRole.mention}" ,delete_after=settings.DELETE_PING_AFTER)
+        await mm_channel.send(f"{consultantRole.mention} {managementRole.mention} {supervisorRole.mention} {ppvRole.mention}" ,delete_after=settings.DELETE_PING_AFTER)
