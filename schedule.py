@@ -8,8 +8,12 @@ import settings
 from discord.ext import commands
 import pytz
 import calendar
+from customlist import LinkedListQueue
+import util
 
 timezone = pytz.timezone("America/Chicago")
+
+mm_time_queue = LinkedListQueue()
 
 def replace_month_name(msg: str, now) -> str:
     next_month_number = (now.month + 1) % 12
@@ -23,8 +27,11 @@ class Scheduler:
         self.log = log
         self.offday_msg = self.read_announcement_from_file('offDayMsg.txt')
         self.payment_msg = self.read_announcement_from_file('paymentMsg.txt')
+        
         self.task.start()
+        self.mmPing.start()
 
+        self.last_ping_time = None
         self.last_sent_minute_offday = None
         self.last_sent_minute_payment = None
 
@@ -51,7 +58,23 @@ class Scheduler:
         elif current_time != self.last_sent_minute_payment:
             self.last_sent_minute_payment = None
             
-
+    @tasks.loop(seconds=15)
+    async def mmPing(self):
+        if mm_time_queue.peek() == None:
+            return
+        
+        now = dt.now()
+        
+        if self.last_ping_time != None and (now - self.last_ping_time).total_seconds() / 60.0 < settings.MM_MIN_PING:
+            return
+        
+        _, oldest_mm_time = mm_time_queue.peek()
+        
+        if (now - oldest_mm_time).total_seconds() / 60.0 > settings.MM_MIN_WAIT:
+            await self.pingMM()
+            self.last_ping_time = now
+            mm_time_queue.pop()
+            
     async def publish_announcement(self, msg: str):
         guild = self.bot.get_guild(settings.ANNOUNCEMENT_GUILD_ID_INT)
 
@@ -78,3 +101,12 @@ class Scheduler:
         except FileNotFoundError:
             self.log.error(f"Announcement file '{filepath}' not found!")
             return "No announcement message found."
+        
+    async def pingMM(self):
+        guild = self.bot.get_guild(settings.GUILD_ID_INT)
+        mm_channel = discord.utils.get(guild.channels, id=settings.MMA_APPROVAL_ID)
+        
+        consultantRole = discord.utils.get(guild.roles, id=settings.CONSULT_ROLE_ID)
+        managementRole = discord.utils.get(guild.roles, id=settings.MANAGEMENT_ROLE_ID)
+        
+        await mm_channel.send(f"{consultantRole.mention} {managementRole.mention}" ,delete_after=settings.DELETE_PING_AFTER)

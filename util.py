@@ -73,14 +73,14 @@ def getLeaksChannel(interaction: discord.Interaction) -> discord.TextChannel:
     return discord.utils.get(interaction.guild.channels, id=settings.LEAKS_QUEUE_ID)
     
 def getConsultRole(interaction: discord.Interaction) -> discord.Role:
-    return discord.utils.get(interaction.guild.roles, id=settings.CONSULT_ID)
+    return discord.utils.get(interaction.guild.roles, id=settings.CONSULT_ROLE_ID)
     
 def getManagementRole(interaction: discord.Interaction) -> discord.Role:
     return discord.utils.get(interaction.guild.roles, id=settings.MANAGEMENT_ROLE_ID)
     
 def getSupervisorRole(interaction: discord.Interaction) -> discord.Role:
-    return discord.utils.get(interaction.guild.roles, id=settings.SUPERVISOR_ID)
+    return discord.utils.get(interaction.guild.roles, id=settings.SUPERVISOR_ROLE_ID)
     
 def getPPVEngRole(interaction: discord.Interaction) -> discord.Role:
-    return discord.utils.get(interaction.guild.roles, id=settings.PPV_ENG_ID)
+    return discord.utils.get(interaction.guild.roles, id=settings.PPV_ENG_ROLE_ID)
     

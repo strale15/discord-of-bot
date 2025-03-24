@@ -3,6 +3,15 @@ from os import name
 import util
 import discord
 import settings
+import schedule
+from datetime import datetime as dt
+import threading
+
+lock = threading.Lock()
+
+def remove_mm_from_queue(message: discord.Message):
+    with lock:
+        schedule.mm_time_queue.remove_by_key(message.id)
 
 class MassMessageCommentModal(discord.ui.Modal, title="Comment on MM"):
     def __init__(self, ctx: discord.Interaction, requestChannel: discord.TextChannel, employee: discord.User, modelName: str, requestMsg: discord.Message, embed: discord.Embed):
@@ -40,6 +49,7 @@ class MassMessageCommentModal(discord.ui.Modal, title="Comment on MM"):
     async def on_submit(self, interaction: discord. Interaction):
         mmText = self.embed.fields[0].value
         
+        remove_mm_from_queue(self.requestMsg)
         await self.requestMsg.delete()
         
         self.embed.color = discord.Color.yellow()
@@ -90,6 +100,7 @@ class MassMessageApproveAndCommentModal(discord.ui.Modal, title="Approve and com
     async def on_submit(self, interaction: discord. Interaction):
         originalMessage = self.embed.fields[0].value
         
+        remove_mm_from_queue(self.requestMsg)
         await self.requestMsg.delete()
         
         self.embed.color = discord.Color.green()
@@ -118,6 +129,7 @@ class MmaView(discord.ui.View):
     async def approve(self, interaction: discord.Interaction, Button: discord.ui.Button):
         originalMessage = self.embed.fields[0].value
         
+        remove_mm_from_queue(self.mm)
         await self.mm.delete()
         
         self.embed.set_field_at(0, name="APPROVED", value="", inline=False)
@@ -141,6 +153,7 @@ class MmaView(discord.ui.View):
         
     @discord.ui.button(label="Reject", style=discord.ButtonStyle.red)
     async def reject(self, interaction: discord.Interaction, Button: discord.ui.Button):
+        remove_mm_from_queue(self.mm)
         await self.mm.delete()
         try:
             self.embed.color = discord.Color.red()
@@ -211,6 +224,9 @@ class MassMessageModal(discord.ui.Modal, title="Submit MM"):
                 
             if self.commentedMMEmbed != None:
                 await self.commentedMMEmbed.edit(view=None)
+                
+            #Push mm to ping queue
+            schedule.mm_time_queue.add(message.id, dt.now())
                 
             await interaction.response.send_message(f"{interaction.user.mention} Thank you for submitting your mm, it will be reviewed!", ephemeral=True, delete_after=settings.DELETE_AFTER)
         except Exception as e:

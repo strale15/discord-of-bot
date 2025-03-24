@@ -38,9 +38,9 @@ VOICE_QUEUE_ID = int(os.getenv("VOICE_QUEUE_ID"))
 LEAKS_QUEUE_ID = int(os.getenv("LEAKS_QUEUE_ID"))
 FINES_CHANNEL_ID = int(os.getenv("FINES_CHANNEL_ID"))
 
-CONSULT_ID = int(os.getenv("CONSULT_ID"))
-SUPERVISOR_ID = int(os.getenv("SUPERVISOR_ID"))
-PPV_ENG_ID = int(os.getenv("PPV_ENG_ID"))
+CONSULT_ROLE_ID = int(os.getenv("CONSULT_ROLE_ID"))
+SUPERVISOR_ROLE_ID = int(os.getenv("SUPERVISOR_ROLE_ID"))
+PPV_ENG_ROLE_ID = int(os.getenv("PPV_ENG_ROLE_ID"))
 MANAGEMENT_ROLE_ID = int(os.getenv("MANAGEMENT_ROLE_ID"))
 
 M_MANAGEMENT_ROLE_ID = int(os.getenv("M_MANAGEMENT_ROLE_ID"))
@@ -61,6 +61,14 @@ ANNOUNCEMENT_CHANNEL_ID = int(os.getenv("ANNOUNCEMENT_CHANNEL_ID"))
 OFF_DAY_SEND_TIME = os.getenv("OFF_DAY_SEND_TIME")
 PAYMENT_SEND_TIME = os.getenv("PAYMENT_SEND_TIME")
 PAYMENT_SEND_DAY = int(os.getenv("PAYMENT_SEND_DAY"))
+
+#Ping
+MM_MIN_PING = float(os.getenv("MM_MIN_PING"))
+MM_MIN_WAIT = float(os.getenv("MM_MIN_WAIT"))
+DELETE_PING_AFTER = int(os.getenv("DELETE_PING_AFTER"))
+
+
+
 
 LOGGING_CONFIG = {
     "version": 1,
