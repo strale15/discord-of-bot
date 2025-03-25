@@ -25,25 +25,34 @@ class LinkedListQueue:
             value = self.head.value
             self.head = self.head.next
             self.size -= 1
+            if self.head is None:
+                self.tail = None
             return key, value
         return None
 
     def remove_by_key(self, key):
         current = self.head
         previous = None
-        
+
         while current:
             if current.key == key:
                 if previous:
                     previous.next = current.next
                 else:
                     self.head = current.next
+
                 if current == self.tail:
                     self.tail = previous
+
+                if self.head is None:
+                    self.tail = None
+
                 self.size -= 1
                 return current.key, current.value
+
             previous = current
             current = current.next
+
         return None
 
     def peek(self):

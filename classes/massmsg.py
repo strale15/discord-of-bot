@@ -226,7 +226,8 @@ class MassMessageModal(discord.ui.Modal, title="Submit MM"):
                 await self.commentedMMEmbed.edit(view=None)
                 
             #Push mm to ping queue
-            schedule.mm_time_queue.add(message.id, dt.now())
+            with lock:
+                schedule.mm_time_queue.add(message.id, dt.now())
                 
             await interaction.response.send_message(f"{interaction.user.mention} Thank you for submitting your mm, it will be reviewed!", ephemeral=True, delete_after=settings.DELETE_AFTER)
         except Exception as e:

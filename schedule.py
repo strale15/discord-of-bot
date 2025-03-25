@@ -68,12 +68,14 @@ class Scheduler:
         if self.last_ping_time != None and (now - self.last_ping_time).total_seconds() / 60.0 < settings.MM_MIN_PING:
             return
         
-        _, oldest_mm_time = mm_time_queue.peek()
+        m_id, oldest_mm_time = mm_time_queue.peek()
         
         if (now - oldest_mm_time).total_seconds() / 60.0 > settings.MM_MIN_WAIT:
             await self.pingMM()
             self.last_ping_time = now
             mm_time_queue.pop()
+            
+            self.log.info(f"Pinged mm at {now}, id: {m_id}")
             
     async def publish_announcement(self, msg: str):
         guild = self.bot.get_guild(settings.ANNOUNCEMENT_GUILD_ID_INT)
@@ -111,4 +113,4 @@ class Scheduler:
         supervisorRole = discord.utils.get(guild.roles, id=settings.SUPERVISOR_ROLE_ID)
         ppvRole = discord.utils.get(guild.roles, id=settings.PPV_ENG_ROLE_ID)
         
-        await mm_channel.send(f"{consultantRole.mention} {managementRole.mention} {supervisorRole.mention} {ppvRole.mention}" ,delete_after=settings.DELETE_PING_AFTER)
+        await mm_channel.send(f"{consultantRole.mention} {managementRole.mention} {supervisorRole.mention} {ppvRole.mention}", delete_after=settings.DELETE_PING_AFTER)
