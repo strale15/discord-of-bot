@@ -35,7 +35,7 @@ class Scheduler:
         self.last_sent_minute_offday = None
         self.last_sent_minute_payment = None
 
-    @tasks.loop(seconds=20)
+    @tasks.loop(seconds=60)
     async def task(self):
         now = dt.now(timezone)
         current_time = now.strftime("%H:%M")
