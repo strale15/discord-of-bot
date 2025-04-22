@@ -9,8 +9,10 @@ import asyncio
 import settings
 from classes import massmsg, customs, formats, voice, leaks, sheets, fine
 from util import *
+import ndacheck
 import util
 import schedule
+import os
 
 class MyClient(commands.Bot):
     async def on_ready(self):
@@ -22,7 +24,8 @@ class MyClient(commands.Bot):
             synced = await self.tree.sync(guild=settings.GUILD_ID)
             syncedMan = await self.tree.sync(guild=settings.M_GUILD_ID)
             syncedAnn = await self.tree.sync(guild=settings.ANNOUNCEMENT_GUILD_ID)
-            log.info(f'Synced {len(synced)} commands, {len(syncedMan)} on management and {len(syncedAnn)} on announcement.')
+            syncedTrain = await self.tree.sync(guild=settings.TRAIN_GUILD_ID)
+            log.info(f'Synced {len(synced)} commands, {len(syncedMan)} on management, {len(syncedTrain)} on train and {len(syncedAnn)} on announcement.')
         except Exception as e:
             log.info(f"Sync failed {e}")
             
@@ -33,6 +36,128 @@ intents = discord.Intents.all()
 intents.message_content = True
 
 client = MyClient(command_prefix="!", intents=intents)
+
+user_cooldowns = {}
+COOLDOWN_TIME = datetime.timedelta(minutes=settings.SEND_NDA_COOLDOWN)
+
+pdf_user_cooldowns = {}
+COOLDOWN_PDF_TIME = datetime.timedelta(minutes=settings.SEND_NDA_PDF_COOLDOWN)
+
+SIGNED_USERS_FILE = "nda/signed_users.txt"
+
+def load_signed_users():
+    try:
+        with open(SIGNED_USERS_FILE, "r") as file:
+            signed_users = {line.strip() for line in file.readlines()}
+        return signed_users
+    except FileNotFoundError:
+        return set()
+
+def save_signed_user(user_id):
+    with open(SIGNED_USERS_FILE, "a") as file:
+        file.write(f"{user_id}\n")
+        
+def check_if_already_signed(user_id):
+    signed_users = load_signed_users()
+    
+    if str(user_id) in signed_users:
+        return True
+        
+
+@client.event
+async def on_member_join(member):
+    if not member.bot:
+        if check_if_already_signed(member.id):
+            return
+        
+        try:
+            await member.send("Welcome to the XIC! We're glad to have you here.\nIf you want to proceed and sign the NDA answer to this message with 'Send NDA'\n-#If you are unable to send messages to a bot try using discord App not the browser.")
+        except discord.Forbidden:
+            log.info(f"Could not send a join DM to {member.name}")
+
+@client.event
+async def on_message(message: discord.Message):
+    if message.author.bot:
+        return
+    
+    if isinstance(message.channel, discord.DMChannel) and message.content == "Send NDA":
+        user_id = message.author.id
+        
+        if check_if_already_signed(user_id):
+            await message.channel.send(f"You have already signed the NDA.")
+            return
+        
+        if user_id in user_cooldowns:
+            last_sent_time = user_cooldowns[user_id]
+            current_time = datetime.datetime.now()
+
+            if current_time - last_sent_time < COOLDOWN_TIME:
+                remaining_time = COOLDOWN_TIME - (current_time - last_sent_time)
+                await message.channel.send(f"Please wait {remaining_time} before requesting the NDA again.")
+                return
+        
+        temp_pdf = ndacheck.edit_nda_date()
+        
+        try:
+            await message.channel.send("Please watch the guide on how to sign the NDA document and when you are done send the file to me here.")
+            await message.channel.send(file=discord.File("nda/guide.mp4"))
+            await message.channel.send(file=discord.File(temp_pdf))
+        finally:
+            if os.path.exists(temp_pdf):
+                os.remove(temp_pdf)
+        
+        user_cooldowns[user_id] = datetime.datetime.now()
+
+    if isinstance(message.channel, discord.DMChannel) and message.attachments:
+        for attachment in message.attachments:
+            if attachment.filename.endswith(".pdf") and "XIC_NDA" in attachment.filename:
+                user_id = message.author.id
+        
+                if check_if_already_signed(user_id):
+                    await message.channel.send(f"You have already signed the NDA.")
+                    return
+        
+                if user_id in pdf_user_cooldowns:
+                    last_sent_time = pdf_user_cooldowns[user_id]
+                    current_time = datetime.datetime.now()
+
+                    if current_time - last_sent_time < COOLDOWN_PDF_TIME:
+                        remaining_time = COOLDOWN_PDF_TIME - (current_time - last_sent_time)
+                        await message.channel.send(f"Please wait {remaining_time} before sending the NDA pdf again.")
+                        return
+                
+                date = datetime.datetime.now()
+                formatted_date = date.strftime("%Y-%m-%d")
+                file_path = f"./nda/{formatted_date}_{user_id}_{attachment.filename}"
+                await attachment.save(file_path)
+                await message.channel.send("Thanks! I received your NDA document. Checking it now...")
+                pdf_user_cooldowns[user_id] = datetime.datetime.now()
+                
+                #Check pdf for name and signature
+                check, err_msg = ndacheck.checkNda(path=file_path)
+                if check:
+                    #Save to drive and give role to the user
+                    try:
+                        ndacheck.upload_to_drive(file_path=file_path, folder_id=settings.DRIVE_FOLDER_ID)
+                        save_signed_user(user_id=user_id)
+                        await message.channel.send("Your NDA is all good, you will receive the trainee role shortly.")
+                        
+                        if await util.assign_role_by_ids(client, settings.TRAIN_GUILD_ID_INT, user_id, settings.TRAINEE_ROLE_ID):
+                            await message.channel.send("You received the trainee role, you can start the training process, check the server for more info.")
+                        else:
+                            await message.channel.send("Something went wrong while assigning you the trainee role, please contact management.")
+                    except:
+                        await message.channel.send("Something went wrong while processing your NDA, please contact management.")
+                else:
+                    await message.channel.send(f"{err_msg}")
+                
+                try:
+                    os.remove(file_path)
+                except Exception as e:
+                    log.warning(f"Error deleting file: {e}")
+            break
+
+    await client.process_commands(message)
 
 ###---------------- COMMANDS ----------------###
 async def delete_message_after_delay(message: discord.Message, delay: int):

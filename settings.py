@@ -67,7 +67,16 @@ MM_MIN_PING = float(os.getenv("MM_MIN_PING"))
 MM_MIN_WAIT = float(os.getenv("MM_MIN_WAIT"))
 DELETE_PING_AFTER = int(os.getenv("DELETE_PING_AFTER"))
 
+#Train
+TRAIN_GUILD_ID_INT = int(os.getenv("TRAIN_GUILD_ID"))
+TRAIN_GUILD_ID = discord.Object(id=TRAIN_GUILD_ID_INT)
 
+TRAINEE_ROLE_ID = int(os.getenv("TRAINEE_ROLE_ID"))
+
+SEND_NDA_COOLDOWN = int(os.getenv("SEND_NDA_COOLDOWN"))
+SEND_NDA_PDF_COOLDOWN = int(os.getenv("SEND_NDA_PDF_COOLDOWN"))
+
+DRIVE_FOLDER_ID = os.getenv("DRIVE_FOLDER_ID")
 
 
 LOGGING_CONFIG = {

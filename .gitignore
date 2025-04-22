@@ -8,6 +8,7 @@ __pycache__/
 bot-env/
 logs/
 .vscode/
+nda/
 
 # C extensions
 *.so
