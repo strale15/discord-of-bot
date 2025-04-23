@@ -65,13 +65,24 @@ def check_if_already_signed(user_id):
         
 
 @client.event
-async def on_member_join(member):
+async def on_member_join(member: discord.Member):
     if not member.bot:
         if check_if_already_signed(member.id):
             return
         
+        join_message = f'''Hello {member.global_name} and welcome to XICE.
+
+        In this server you will go through the process of learning one of the highest degrees of OnlyFans chatting and the opportunities that lie ahead for you once you start your journey. As this is a fully remote job, this can be done anywhere in the world, so long as you have a stable internet connection and a computer that can run Infloww.
+
+        We look forward to seeing the fullest extent of your abilities very soon!
+
+        *Please fill in this form: https://forms.gle/jyGAT1eDR9RrktZk7*
+
+        *Once you're done respond with 'Send NDA', I will send you the NDA to sign so you can start with the trainings*
+        -#If you are unable to send messages to a bot try using discord App not the browser.'''
+        
         try:
-            await member.send("Welcome to the XIC! We're glad to have you here.\nIf you want to proceed and sign the NDA answer to this message with 'Send NDA'\n-#If you are unable to send messages to a bot try using discord App not the browser.")
+            await member.send(join_message)
         except discord.Forbidden:
             log.info(f"Could not send a join DM to {member.name}")
 
@@ -80,11 +91,16 @@ async def on_message(message: discord.Message):
     if message.author.bot:
         return
     
-    if isinstance(message.channel, discord.DMChannel) and message.content == "Send NDA":
+    if isinstance(message.channel, discord.DMChannel) and message.content.lower() == "send nda":
         user_id = message.author.id
         
         if check_if_already_signed(user_id):
             await message.channel.send(f"You have already signed the NDA.")
+            return
+        
+        #Check google forms
+        if not sheets.is_form_filled(message.author.name):
+            await message.channel.send(f"Please fill in the google form. If you already did you might have inputted the wrong discord nick, please contact management.")
             return
         
         if user_id in user_cooldowns:
@@ -115,6 +131,11 @@ async def on_message(message: discord.Message):
         
                 if check_if_already_signed(user_id):
                     await message.channel.send(f"You have already signed the NDA.")
+                    return
+                
+                #Check google forms
+                if not sheets.is_form_filled(message.author.name):
+                    await message.channel.send(f"Please fill in the google form. If you already did you might have inputted the wrong discord nick, please contact management.")
                     return
         
                 if user_id in pdf_user_cooldowns:

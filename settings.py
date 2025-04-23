@@ -24,6 +24,7 @@ TICK_EMOJI = "✅"
 DELETE_AFTER = int(os.getenv("DELETE_AFTER"))
 
 SHEET_ID = os.getenv("SHEET_ID")
+TRAIN_FORM_SHEET_ID = os.getenv("TRAIN_FORM_SHEET_ID")
 
 #PROD
 GUILD_ID_INT = int(os.getenv("GUILD_ID"))
