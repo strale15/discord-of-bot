@@ -4,8 +4,7 @@ from PIL import Image
 import numpy as np
 import os
 import re
-from google.oauth2.credentials import Credentials
-from google_auth_oauthlib.flow import InstalledAppFlow
+from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 from datetime import datetime
@@ -31,20 +30,26 @@ def edit_nda_date():
     doc.close()
     return temp_pdf
 
+
 def authenticate():
     creds = None
-    if os.path.exists("nda/token.json"):
-        creds = Credentials.from_authorized_user_file("nda/token.json", SCOPES)
-    if not creds or not creds.valid:
-        flow = InstalledAppFlow.from_client_secrets_file("nda/credentials.json", SCOPES)
-        creds = flow.run_local_server(port=0)
-        with open("nda/token.json", "w") as token:
-            token.write(creds.to_json())
+    # Use the service account key file (drive-key.json) to authenticate
+    try:
+        creds = service_account.Credentials.from_service_account_file(
+            "nda/drive-key.json",  # Path to your service account key
+            scopes=SCOPES  # Required scopes for Drive API
+        )
+    except Exception as e:
+        print(f"Error loading service account: {e}")
+        return None
     return creds
 
 def upload_to_drive(file_path, folder_id=None):
     creds = authenticate()
-    service = build("drive", "v3", credentials=creds)
+    if not creds:
+        print("Authentication failed!")
+        return
+    service = build("drive", "v3", credentials=creds, cache_discovery=False)
 
     file_name = os.path.basename(file_path)
     media = MediaFileUpload(file_path)
@@ -69,13 +74,13 @@ def checkNda(path="nda/XIC_NDA.pdf"):
     if match:
         name = match.group(1)
     else:
-        return False, "No name provided with the PDF, please name your file XIC_NDA-Name_Surname.pdf"
+        return False, "No name provided with the PDF, please name your file XIC_NDA-Name_Surname.pdf", ""
         
     #Check for name
     try:
         doc = fitz.open(path)
     except:
-        return False, "Internal error, please contact management."    
+        return False, "Internal error, please contact management.", ""    
     
     first_page = doc[0]
     
@@ -83,7 +88,7 @@ def checkNda(path="nda/XIC_NDA.pdf"):
     lines = text.strip().split('\n')
 
     if lines[-1].lower() != name.lower().replace('_', ' '):
-        return False, "Name you wrote in the PDF does not match with the name in the filename or you didn't write the name at all."
+        return False, "Name you wrote in the PDF does not match with the name in the filename or you didn't write the name at all.", ""
         
     #Check for signature
     page = doc[-1]  # last page
@@ -111,7 +116,7 @@ def checkNda(path="nda/XIC_NDA.pdf"):
     except Exception as e:
         print(f"Error deleting {img_path}")
 
-    if ink_pixels > 2200:
-        return True, "All good!"
+    if ink_pixels > 3500:
+        return True, "All good!", name.replace('_', ' ')
     else:
-        return False, "You didn't create a signature."
+        return False, "You didn't create a signature.", ""

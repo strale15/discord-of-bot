@@ -83,3 +83,61 @@ def delete_ping(chatter_id: str, model_channel_id: str):
     finally:
         cursor.close()
         conn.close()
+        
+
+def sign_nda(user_id: str, discord_nick: str, full_name: str):
+    conn = connect()
+    if not conn:
+        return
+
+    try:
+        cursor = conn.cursor()
+
+        # Check if user already exists in the 'nda_signed' table
+        check_query = """
+        SELECT COUNT(*)
+        FROM nda_signed
+        WHERE user_id = %s
+        """
+        cursor.execute(check_query, (user_id,))
+        count = cursor.fetchone()[0]
+
+        if count == 0:  # User doesn't exist, so insert
+            insert_query = """
+            INSERT INTO nda_signed (user_id, discord_nick, full_name, sign_time)
+            VALUES (%s, %s, %s, NOW())
+            """
+            cursor.execute(insert_query, (user_id, discord_nick, full_name))
+            conn.commit()
+            print(f"User {user_id} inserted into nda_signed.")
+        else:
+            print(f"User {user_id} already exists. Skipping insertion.")
+
+    except Error as e:
+        raise e
+    finally:
+        cursor.close()
+        conn.close()
+
+
+def is_nda_signed(user_id: str):
+    conn = connect()
+    if not conn:
+        return False
+
+    try:
+        cursor = conn.cursor()
+        query = """
+        SELECT COUNT(*)
+        FROM nda_signed
+        WHERE user_id = %s
+        """
+        cursor.execute(query, (user_id,))
+        count = cursor.fetchone()[0]
+        return count > 0  # Return True if the user exists
+    except Error as e:
+        print(f"Query error: {e}")
+        return False
+    finally:
+        cursor.close()
+        conn.close()
