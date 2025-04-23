@@ -63,7 +63,7 @@ OFF_DAY_SEND_TIME = os.getenv("OFF_DAY_SEND_TIME")
 PAYMENT_SEND_TIME = os.getenv("PAYMENT_SEND_TIME")
 PAYMENT_SEND_DAY = int(os.getenv("PAYMENT_SEND_DAY"))
 
-#Ping
+#Ping management
 MM_MIN_PING = float(os.getenv("MM_MIN_PING"))
 MM_MIN_WAIT = float(os.getenv("MM_MIN_WAIT"))
 DELETE_PING_AFTER = int(os.getenv("DELETE_PING_AFTER"))
@@ -78,6 +78,15 @@ SEND_NDA_COOLDOWN = int(os.getenv("SEND_NDA_COOLDOWN"))
 SEND_NDA_PDF_COOLDOWN = int(os.getenv("SEND_NDA_PDF_COOLDOWN"))
 
 DRIVE_FOLDER_ID = os.getenv("DRIVE_FOLDER_ID")
+
+#Chatter mm ping
+CHATTER_MM_PING_TIME = int(os.getenv("CHATTER_MM_PING_TIME"))
+
+DB_HOST = os.getenv("DB_HOST")
+DB_PORT = int(os.getenv("DB_PORT"))
+DB_NAME = os.getenv("DB_NAME")
+DB_USER = os.getenv("DB_USER")
+DB_PASS = os.getenv("DB_PASS")
 
 
 LOGGING_CONFIG = {

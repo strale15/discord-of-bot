@@ -7,7 +7,7 @@ from discord import HTTPException, app_commands
 import asyncio
 
 import settings
-from classes import massmsg, customs, formats, voice, leaks, sheets, fine
+from classes import massmsg, customs, formats, voice, leaks, sheets, fine, database
 from util import *
 import ndacheck
 import util
@@ -66,11 +66,14 @@ def check_if_already_signed(user_id):
 
 @client.event
 async def on_member_join(member: discord.Member):
+    if member.guild.id != settings.TRAIN_GUILD_ID_INT:
+        return
+    
     if not member.bot:
         if check_if_already_signed(member.id):
             return
         
-        join_message = f'''Hello {member.global_name} and welcome to XICE.
+        join_message = f"""Hello {member.global_name} and welcome to XICE.
 
         In this server you will go through the process of learning one of the highest degrees of OnlyFans chatting and the opportunities that lie ahead for you once you start your journey. As this is a fully remote job, this can be done anywhere in the world, so long as you have a stable internet connection and a computer that can run Infloww.
 
@@ -79,7 +82,7 @@ async def on_member_join(member: discord.Member):
         *Please fill in this form: https://forms.gle/jyGAT1eDR9RrktZk7*
 
         *Once you're done respond with 'Send NDA', I will send you the NDA to sign so you can start with the trainings*
-        -#If you are unable to send messages to a bot try using discord App not the browser.'''
+        -#If you are unable to send messages to a bot try using discord App not the browser."""
         
         try:
             await member.send(join_message)
@@ -354,6 +357,7 @@ async def ciCommand(interaction: discord.Interaction):
             except:
                 log.warning("Error logging ci to file")
 
+            database.insert_ping(chatter_id=interaction.user.id, model_channel_id=interaction.channel_id)
             await interaction.followup.send(f"You are now clocked in _{modelName}_.")
             return
         
