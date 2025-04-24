@@ -104,5 +104,6 @@ Please apply said changes and submit it to me once again.
     if signatureScan.is_there_signature(pdf_path=path, img_path=f"signature_{name}.png"):
         return True, "All good!", name.replace('_', ' ')
     else:
-        msg = """Please provide your signature next to "EMPLOYEE: By: " instead of typing your name. The typed name should only appear in the Employee Name section."""
+        msg = """Please provide your handwritten signature on the line "EMPLOYEE: By: __________" instead of typing your name.
+The typed name should only appear in the Employee Name section."""
         return False, msg, ""

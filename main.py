@@ -41,7 +41,7 @@ user_cooldowns = {}
 COOLDOWN_TIME = datetime.timedelta(minutes=settings.SEND_NDA_COOLDOWN)
 
 pdf_user_cooldowns = {}
-COOLDOWN_PDF_TIME = datetime.timedelta(seconds=settings.SEND_NDA_PDF_COOLDOWN)      
+COOLDOWN_PDF_TIME = datetime.timedelta(minutes=settings.SEND_NDA_PDF_COOLDOWN)      
 
 @client.event
 async def on_member_join(member: discord.Member):
@@ -157,8 +157,6 @@ Once this is done, respond with **'Send NDA'** once more for me to send you the 
                 check, err_msg, full_name = ndacheck.checkNda(path=file_path)
                 if check:
                     #Save to drive and give role to the user
-                    await message.channel.send(f"Signature is valid, and detected name is {full_name}")
-                    '''
                     try:
                         ndacheck.upload_to_drive(file_path=file_path, folder_id=settings.DRIVE_FOLDER_ID)
                         database.sign_nda(user_id=user_id, discord_nick=message.author.name, full_name=full_name)
@@ -171,7 +169,6 @@ Once this is done, respond with **'Send NDA'** once more for me to send you the 
                     except Exception as e:
                         log.warning(e)
                         await message.channel.send("Something went wrong while processing your NDA, please contact management.")
-                    '''
                 else:
                     await message.channel.send(f"{err_msg}")
                 
