@@ -95,7 +95,8 @@ Please rename your file and submit it to me once again.
     lines = text.strip().split('\n')
 
     if lines[-1].lower() != name.lower().replace('_', ' '):
-        msg = """The name on your PDF does not match up with the name on your NDA file, or you did not write your name on your PDF at all.
+        msg = """The name you typed in the PDF does not match up with the name in PDF file name, or you did not type your name in PDF at all.
+Assure that the file name is **XIC_NDA-Name_Surname.pdf**.
 Please apply said changes and submit it to me once again.
         """
         return False, msg, ""
