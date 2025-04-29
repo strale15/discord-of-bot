@@ -6,6 +6,7 @@ import settings
 import schedule
 from datetime import datetime as dt
 import threading
+from classes import database
 
 lock = threading.Lock()
 
@@ -228,7 +229,8 @@ class MassMessageModal(discord.ui.Modal, title="Submit MM"):
             #Push mm to ping queue
             with lock:
                 schedule.mm_time_queue.add(message.id, dt.now())
-                
+            
+            database.delete_ping(chatter_id=interaction.user.id, model_channel_id=interaction.channel_id)
             await interaction.response.send_message(f"{interaction.user.mention} Thank you for submitting your mm, it will be reviewed!", ephemeral=True, delete_after=settings.DELETE_AFTER)
         except Exception as e:
             await interaction.response.send_message(f"_Error submitting the mm, contact staff {e}_", ephemeral=True, delete_after=settings.DELETE_AFTER)

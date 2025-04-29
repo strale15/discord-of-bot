@@ -1,4 +1,5 @@
 from logging import Logger
+from math import e
 import string
 import discord
 from discord.ext import tasks
@@ -10,6 +11,7 @@ import pytz
 import calendar
 from customlist import LinkedListQueue
 import util
+from classes import database
 
 timezone = pytz.timezone("America/Chicago")
 
@@ -30,6 +32,7 @@ class Scheduler:
         
         self.task.start()
         self.mmPing.start()
+        self.pingChatters.start()
 
         self.last_ping_time = None
         self.last_sent_minute_offday = None
@@ -58,6 +61,7 @@ class Scheduler:
         elif current_time != self.last_sent_minute_payment:
             self.last_sent_minute_payment = None
             
+            
     @tasks.loop(seconds=15)
     async def mmPing(self):
         if mm_time_queue.peek() == None:
@@ -76,6 +80,18 @@ class Scheduler:
             mm_time_queue.pop()
             
             self.log.info(f"Pinged mm at {now}, id: {m_id}")
+            
+            
+    @tasks.loop(seconds=60)
+    async def pingChatters(self):
+        unsent_mms = database.get_old_pings(settings.CHATTER_MM_PING_TIME)
+        for chatter_id, model_channel_id in unsent_mms:
+            try:
+                await self.pingChatterMM(chatter_id=int(chatter_id), model_channel_id=int(model_channel_id))
+                database.delete_ping(chatter_id=chatter_id, model_channel_id=model_channel_id)
+            except Exception as e:
+                print(f"Error pinging {chatter_id} for {model_channel_id} error: {e}")
+                
             
     async def publish_announcement(self, msg: str):
         guild = self.bot.get_guild(settings.ANNOUNCEMENT_GUILD_ID_INT)
@@ -114,3 +130,10 @@ class Scheduler:
         ppvRole = discord.utils.get(guild.roles, id=settings.PPV_ENG_ROLE_ID)
         
         await mm_channel.send(f"{consultantRole.mention} {managementRole.mention} {supervisorRole.mention} {ppvRole.mention}", delete_after=settings.DELETE_PING_AFTER)
+        
+    async def pingChatterMM(self, chatter_id, model_channel_id):
+        guild = self.bot.get_guild(settings.GUILD_ID_INT)
+        mm_channel = discord.utils.get(guild.channels, id=model_channel_id)
+        user = discord.utils.get(guild.members, id=chatter_id)
+        
+        await mm_channel.send(f"{user.mention} _you clocked in {settings.CHATTER_MM_PING_TIME} minutes ago and haven't sent a mass message for approval, please do._")

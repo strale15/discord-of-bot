@@ -83,4 +83,27 @@ def getSupervisorRole(interaction: discord.Interaction) -> discord.Role:
     
 def getPPVEngRole(interaction: discord.Interaction) -> discord.Role:
     return discord.utils.get(interaction.guild.roles, id=settings.PPV_ENG_ROLE_ID)
+
+async def assign_role_by_ids(bot, guild_id: int, user_id: int, role_id: int):
+    guild = await bot.fetch_guild(guild_id)
+    if not guild:
+        print("Guild not found!")
+        return False
+
+    user = await guild.fetch_member(user_id)
+    if not user:
+        print("User not found in guild!")
+        return False
+
+    role = guild.get_role(role_id)
+    if not role:
+        print("Role not found!")
+        return False
+
+    try:
+        await user.add_roles(role)
+        print(f"Assigned role {role.name} to {user.name}!")
+        return True
+    except:
+        return False
     

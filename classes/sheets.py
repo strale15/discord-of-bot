@@ -10,9 +10,11 @@ key = Credentials.from_service_account_file("key.json", scopes=scopes)
 client = gspread.authorize(key)
 
 workbook = client.open_by_key(settings.SHEET_ID)
+train_workbook = client.open_by_key(settings.TRAIN_FORM_SHEET_ID)
 
 finesSheet = workbook.get_worksheet(0)
 referralsSheet = workbook.get_worksheet(1)
+trainFormSheet = train_workbook.get_worksheet(0)
 
 class FineRow:
     def __init__(self, username, reason, amount, date):
@@ -161,5 +163,13 @@ def addReferral(employeeNick: str, referralNick: str) -> bool:
     
     referralsSheet.update_cell(userRow, firstEmptyRefCellCol, referralNick)
     return True
+
+def is_form_filled(discord_nick: str):
+    nick_values = trainFormSheet.col_values(3)
+    for nick in nick_values:
+        if nick.lower().lstrip('@') == discord_nick.lower().lstrip('@'):
+            return True
+    return False
+    
     
     
