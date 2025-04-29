@@ -73,6 +73,7 @@ TRAIN_GUILD_ID_INT = int(os.getenv("TRAIN_GUILD_ID"))
 TRAIN_GUILD_ID = discord.Object(id=TRAIN_GUILD_ID_INT)
 
 TRAINEE_ROLE_ID = int(os.getenv("TRAINEE_ROLE_ID"))
+WELCOME_ROLE_ID = int(os.getenv("WELCOME_ROLE_ID"))
 
 SEND_NDA_COOLDOWN = int(os.getenv("SEND_NDA_COOLDOWN"))
 SEND_NDA_PDF_COOLDOWN = int(os.getenv("SEND_NDA_PDF_COOLDOWN"))
