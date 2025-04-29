@@ -105,6 +105,7 @@ Once this is done, respond with **'Send NDA'** once more for me to send you the 
             watch_nda_msg = """Please watch the video on how to sign the NDA. Once you're done, submit the file to me in this chat and you're all good to go!
 Make sure to rename your NDA file as such: **XIC_NDA-Name_Surname.pdf**
 For example: **XIC_NDA-John_Doe.pdf**
+_Also don't use special characters like ć,č,ž,ä,ö... and similar._
 https://www.sejda.com/pdf-editor"""
             
             await message.channel.send(watch_nda_msg)

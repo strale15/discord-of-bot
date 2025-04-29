@@ -104,6 +104,7 @@ async def assign_role_by_ids(bot, guild_id: int, user_id: int, role_id: int):
         await user.add_roles(role)
         print(f"Assigned role {role.name} to {user.name}!")
         return True
-    except:
+    except Exception as e:
+        print(e)
         return False
     
