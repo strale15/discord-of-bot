@@ -1,6 +1,6 @@
 import mysql.connector
 from mysql.connector import Error
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import settings
 
 
@@ -40,6 +40,26 @@ def insert_ping(chatter_id: str, model_channel_id: str):
     finally:
         cursor.close()
         conn.close()
+        
+        
+def insert_mma_sent(user_id: str, model_channel_id: str):
+    conn = connect()
+    if not conn:
+        return
+
+    try:
+        cursor = conn.cursor()
+        query = """
+        INSERT INTO mma_sent (user_id, model_channel_id, timestamp)
+        VALUES (%s, %s, NOW())
+        """
+        cursor.execute(query, (user_id, model_channel_id))
+        conn.commit()
+    except Error as e:
+        print(f"Insert error: {e}")
+    finally:
+        cursor.close()
+        conn.close()
 
 
 def get_old_pings(minutes: int):
@@ -60,6 +80,46 @@ def get_old_pings(minutes: int):
     except Error as e:
         print(f"Query error: {e}")
         return []
+    finally:
+        cursor.close()
+        conn.close()
+        
+
+def is_mma_grace_period_on(user_id, model_channel_id):
+    conn = connect()
+    if not conn:
+        return []
+
+    is_grace = False
+    try:
+        cursor = conn.cursor()
+        query = """
+        SELECT user_id, model_channel_id, timestamp
+        FROM mma_sent
+        WHERE user_id = %s AND model_channel_id = %s
+        """
+        cursor.execute(query, (user_id, model_channel_id))
+        results = cursor.fetchall()
+        
+        now = datetime.now(timezone.utc)
+        
+        for user_id, model_channel_id, timestamp in results:
+            timestamp = timestamp.replace(tzinfo=timezone.utc)
+            if now - timestamp <= timedelta(minutes=settings.CHATTER_MM_GRACE_DURATION):
+                is_grace = True
+                break
+            
+        delete_query = """
+        DELETE FROM mma_sent
+        WHERE user_id = %s AND model_channel_id = %s
+        """
+        cursor.execute(delete_query, (user_id, model_channel_id))
+        conn.commit()
+
+        return is_grace
+    except Error as e:
+        print(f"Query error: {e}")
+        return False
     finally:
         cursor.close()
         conn.close()

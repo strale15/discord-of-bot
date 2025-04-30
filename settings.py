@@ -73,6 +73,7 @@ TRAIN_GUILD_ID_INT = int(os.getenv("TRAIN_GUILD_ID"))
 TRAIN_GUILD_ID = discord.Object(id=TRAIN_GUILD_ID_INT)
 
 TRAINEE_ROLE_ID = int(os.getenv("TRAINEE_ROLE_ID"))
+NDA_SIGNED_ROLE_ID = int(os.getenv("NDA_SIGNED_ROLE_ID"))
 WELCOME_ROLE_ID = int(os.getenv("WELCOME_ROLE_ID"))
 
 SEND_NDA_COOLDOWN = int(os.getenv("SEND_NDA_COOLDOWN"))
@@ -82,6 +83,7 @@ DRIVE_FOLDER_ID = os.getenv("DRIVE_FOLDER_ID")
 
 #Chatter mm ping
 CHATTER_MM_PING_TIME = int(os.getenv("CHATTER_MM_PING_TIME"))
+CHATTER_MM_GRACE_DURATION = int(os.getenv("CHATTER_MM_GRACE_DURATION"))
 
 DB_HOST = os.getenv("DB_HOST")
 DB_PORT = int(os.getenv("DB_PORT"))

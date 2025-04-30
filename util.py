@@ -1,6 +1,7 @@
 import dis
 import discord
 import settings
+import asyncio
 
 def getUserClockInChannel(user: discord.Member) -> discord.VoiceChannel:
     guild = user.guild
@@ -53,6 +54,22 @@ def checkIfUserIsClockedIn(user: discord.Member, channelName: str) -> bool:
         return False
     
     return user.display_name in clockedInUsers
+
+#Takes user id and model text channel id to see if that user is clocked into that model
+def checkIfUserIsClockedInByIds(interaction: discord.Interaction, user_id, model_channel_id):
+    user = discord.utils.get(interaction.guild.members, id=user_id)
+    model_text_channel = discord.utils.get(interaction.guild.channels, id=model_channel_id)
+    
+    modelName = model_text_channel.category.name.lower()
+    clockInCategory = getCategoryByName(interaction.guild, 'clock in')
+    username = user.display_name
+    
+    for channel in clockInCategory.channels:
+        if isinstance(channel, discord.VoiceChannel) and modelName in channel.name.lower():
+            if checkIfUserIsClockedIn(user, channel.name):
+                return True
+            
+    return False
 
 def getBaseChannelName(channelName: str) -> str:
     return channelName.split('-')[0].strip()
@@ -131,4 +148,8 @@ async def assign_role_by_ids(bot, guild_id: int, user_id: int, role_id: int):
     except Exception as e:
         print(e)
         return False
+    
+async def delete_message_after_delay(message: discord.Message, delay: int):
+    await asyncio.sleep(delay)
+    await message.delete()
     

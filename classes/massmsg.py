@@ -1,4 +1,5 @@
 from ast import Str
+import asyncio
 from os import name
 import util
 import discord
@@ -7,6 +8,7 @@ import schedule
 from datetime import datetime as dt
 import threading
 from classes import database
+from util import delete_message_after_delay
 
 lock = threading.Lock()
 
@@ -202,6 +204,7 @@ class MassMessageModal(discord.ui.Modal, title="Submit MM"):
 
     
     async def on_submit(self, interaction: discord. Interaction):
+        await interaction.response.defer(ephemeral=True)
         try:
             #Send mm for review
             channel = util.getMmaApprovalChannel(interaction)
@@ -231,6 +234,13 @@ class MassMessageModal(discord.ui.Modal, title="Submit MM"):
                 schedule.mm_time_queue.add(message.id, dt.now())
             
             database.delete_ping(chatter_id=interaction.user.id, model_channel_id=interaction.channel_id)
-            await interaction.response.send_message(f"{interaction.user.mention} Thank you for submitting your mm, it will be reviewed!", ephemeral=True, delete_after=settings.DELETE_AFTER)
+            
+            #If user is not clocked in add grace period for mma pinging
+            if not util.checkIfUserIsClockedInByIds(interaction=interaction, user_id=interaction.user.id, model_channel_id=interaction.channel_id):
+                database.insert_mma_sent(user_id=interaction.user.id, model_channel_id=interaction.channel_id)
+                
+            message = await interaction.followup.send(f"{interaction.user.mention} Thank you for submitting your mm, it will be reviewed!")
+            asyncio.create_task(delete_message_after_delay(message, settings.DELETE_AFTER))
         except Exception as e:
-            await interaction.response.send_message(f"_Error submitting the mm, contact staff {e}_", ephemeral=True, delete_after=settings.DELETE_AFTER)
+            message = await interaction.followup.send(f"_Error submitting the mm, contact staff {e}_")
+            asyncio.create_task(delete_message_after_delay(message, settings.DELETE_AFTER))

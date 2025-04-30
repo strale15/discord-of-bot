@@ -11,6 +11,7 @@ from classes import massmsg, customs, formats, voice, leaks, sheets, fine, datab
 from util import *
 import ndacheck
 import util
+from util import delete_message_after_delay
 import schedule
 import os
 
@@ -164,8 +165,9 @@ Once this is done, respond with **'Send NDA'** once more for me to send you the 
                         await message.channel.send("Great, the NDA looks properly filled out. Welcome to XICE Training!")
                         
                         if await util.assign_role_by_ids(client, settings.TRAIN_GUILD_ID_INT, user_id, settings.TRAINEE_ROLE_ID):
-                            await util.remove_role_by_ids(client, settings.TRAIN_GUILD_ID_INT, user_id, settings.WELCOME_ROLE_ID)
-                            await message.channel.send("You have received the Trainee role and can begin your training process. Please **ensure** that you're reading **ALL** channels available to you, and reacting to get your appropriate Training Shift Roles. Failure to follow said procedures will result in a kick from the server within **3 days** after joining.")
+                            if await util.assign_role_by_ids(client, settings.TRAIN_GUILD_ID_INT, user_id, settings.NDA_SIGNED_ROLE_ID):
+                                await util.remove_role_by_ids(client, settings.TRAIN_GUILD_ID_INT, user_id, settings.WELCOME_ROLE_ID)
+                                await message.channel.send("You have received the Trainee role and can begin your training process. Please **ensure** that you're reading **ALL** channels available to you, and reacting to get your appropriate Training Shift Roles. Failure to follow said procedures will result in a kick from the server within **3 days** after joining.")
                         else:
                             await message.channel.send("Something went wrong while assigning you the Trainee role, please contact management.")
                     except Exception as e:
@@ -182,11 +184,7 @@ Once this is done, respond with **'Send NDA'** once more for me to send you the 
 
     await client.process_commands(message)
 
-###---------------- COMMANDS ----------------###
-async def delete_message_after_delay(message: discord.Message, delay: int):
-    await asyncio.sleep(delay)
-    await message.delete()
-            
+###---------------- COMMANDS ----------------###        
 #Global error handling        
 @client.tree.error
 async def on_error(interaction: discord.Interaction, error: discord.app_commands.AppCommandError) -> None:
@@ -356,7 +354,10 @@ async def ciCommand(interaction: discord.Interaction):
             except:
                 log.warning("Error logging ci to file")
 
-            database.insert_ping(chatter_id=interaction.user.id, model_channel_id=interaction.channel_id)
+            #Check if chatter sent mma in the last X minutes, if yes dont add anything in the ping table
+            if not database.is_mma_grace_period_on(user_id=interaction.user.id, model_channel_id=interaction.channel_id):
+                database.insert_ping(chatter_id=interaction.user.id, model_channel_id=interaction.channel_id)
+                
             await interaction.followup.send(f"You are now clocked in _{modelName}_.")
             return
         
