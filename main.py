@@ -1,8 +1,9 @@
-from discord.ext import commands
 import discord
+from discord.ext import commands
+import os
+
 import settings
 import schedule
-import os
 
 class MyClient(commands.Bot):
     async def setup_hook(self):

@@ -1,7 +1,8 @@
+import discord
 from discord.ext import commands
 from discord import app_commands, Interaction
+
 import settings
-import discord
 from util import *
 
 class Placeholder(commands.Cog):

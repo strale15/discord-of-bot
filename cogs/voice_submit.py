@@ -1,7 +1,8 @@
-from discord.ext import commands
-from discord import app_commands, Interaction
-import settings
 import discord
+from discord.ext import commands
+from discord import app_commands
+
+import settings
 from util import *
 from classes import voice
 

@@ -1,5 +1,7 @@
+import discord
 from discord.ext import commands
-from discord import app_commands, Interaction
+from discord import app_commands
+
 import settings
 from util import *
 from classes import formats
@@ -9,7 +11,7 @@ class Misc(commands.Cog):
         self.bot = bot
 
     @app_commands.command(name="ping", description="Check bot latency")
-    async def ping(self, interaction: Interaction):
+    async def ping(self, interaction: discord.Interaction):
         await interaction.response.send_message(f"Hi! Latency: {self.bot.latency}", ephemeral=True)
         
     #Format command

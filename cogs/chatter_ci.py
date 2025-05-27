@@ -1,7 +1,8 @@
+import discord
 from discord.ext import commands
 from discord import app_commands
+
 import settings
-import discord
 from util import *
 from classes import database
 
