@@ -2,7 +2,6 @@ from discord.ext import commands
 import discord
 import settings
 import schedule
-import asyncio
 import os
 
 class MyClient(commands.Bot):
@@ -19,11 +18,11 @@ class MyClient(commands.Bot):
         self.scheduler = schedule.Scheduler(self, settings.logging.getLogger())
         
         try:
-            synced = await self.tree.sync(guild=settings.GUILD_ID)
+            syncedMain = await self.tree.sync(guild=settings.GUILD_ID)
             syncedMan = await self.tree.sync(guild=settings.M_GUILD_ID)
             syncedAnn = await self.tree.sync(guild=settings.ANNOUNCEMENT_GUILD_ID)
             syncedTrain = await self.tree.sync(guild=settings.TRAIN_GUILD_ID)
-            log.info(f'Synced {len(synced)} commands, {len(syncedMan)} on management, {len(syncedTrain)} on train and {len(syncedAnn)} on announcement.')
+            log.info(f'Synced commands: {len(syncedMain)} on main, {len(syncedMan)} on management, {len(syncedTrain)} on train and {len(syncedAnn)} on announcement.')
         except Exception as e:
             log.info(f"Sync failed {e}")
 

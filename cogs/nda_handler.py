@@ -1,7 +1,6 @@
 from discord.ext import commands
 import settings
 import datetime
-from venv import logger
 import discord
 from discord.ext import commands
 
