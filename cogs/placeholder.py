@@ -10,7 +10,8 @@ class Placeholder(commands.Cog):
         self.bot = bot
         
     async def cog_load(self):
-        self.bot.tree.add_command(self.ping, guild=settings.GUILD_ID)
+        #self.bot.tree.add_command(self.ping, guild=settings.GUILD_ID)
+        pass
 
 async def setup(bot):
     await bot.add_cog(Placeholder(bot))

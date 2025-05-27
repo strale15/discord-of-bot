@@ -221,7 +221,7 @@ class MassMessageModal(discord.ui.Modal, title="Submit MM"):
             embed_message.add_field(name="Message", value=self.mass_message.value, inline=True)
             embed_message.set_footer(text="Review decision:")
             
-            thumbnail_path = "res/envelope.png"
+            thumbnail_path = "resources/icons/envelope.png"
             thumbnail_filename = "envelope.png"
             embed_message.set_thumbnail(url=f"attachment://{thumbnail_filename}")
             

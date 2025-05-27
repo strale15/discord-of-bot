@@ -107,7 +107,7 @@ class CustomsModal(discord.ui.Modal, title="Submit Custom"):
             embed_message.add_field(name="Details:", value=self.details.value, inline=True)
             embed_message.set_footer(text="Review decision:")
             
-            thumbnail_path = "res/request.png"
+            thumbnail_path = "resources/icons/request.png"
             thumbnail_filename = "request.png"
             embed_message.set_thumbnail(url=f"attachment://{thumbnail_filename}")
 

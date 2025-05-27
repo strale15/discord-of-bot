@@ -7,6 +7,11 @@ import schedule
 
 class MyClient(commands.Bot):
     async def setup_hook(self):
+        log.info(f"Setting hooks up...")
+        
+        for cmd in self.tree.get_commands():
+            log.info(f"Registered command: {cmd.name}")
+        
         # Load cogs
         for filename in os.listdir("./cogs"):
             if filename.endswith(".py") and filename != "__init__.py":

@@ -11,7 +11,7 @@ class FormatView(discord.ui.View):
     async def ok(self, interaction: discord.Interaction, Button: discord.ui.Button):
         await self.originalInteraction.delete_original_response()
         
-        thumbnail_path = "res/megaphone.png"
+        thumbnail_path = "resources/icons/megaphone.png"
         thumbnail_filename = "megaphone.png"
         with open(thumbnail_path, "rb") as file:
             await interaction.channel.send(embed=self.embed, file=discord.File(file, filename=thumbnail_filename))
@@ -56,7 +56,7 @@ class FormatModal(discord.ui.Modal, title="Enter Your Message"):
         
         view = FormatView(interaction, embed_message)
         
-        thumbnail_path = "res/megaphone.png"
+        thumbnail_path = "resources/icons/megaphone.png"
         thumbnail_filename = "megaphone.png"
         embed_message.set_thumbnail(url=f"attachment://{thumbnail_filename}")
 
