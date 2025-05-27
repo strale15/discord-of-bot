@@ -151,5 +151,11 @@ async def assign_role_by_ids(bot, guild_id: int, user_id: int, role_id: int):
     
 async def delete_message_after_delay(message: discord.Message, delay: int):
     await asyncio.sleep(delay)
-    await message.delete()
+    await delete_message_ignore_exception(message)
     
+async def delete_message_ignore_exception(message: discord.Message):
+    try:
+        await message.delete()
+    except:
+        #ignore exception
+        pass

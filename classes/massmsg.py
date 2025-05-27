@@ -17,7 +17,7 @@ def remove_mm_from_queue(message: discord.Message):
         schedule.mm_time_queue.remove_by_key(message.id)
 
 class MassMessageCommentModal(discord.ui.Modal, title="Comment on MM"):
-    def __init__(self, ctx: discord.Interaction, requestChannel: discord.TextChannel, employee: discord.User, modelName: str, requestMsg: discord.Message, embed: discord.Embed):
+    def __init__(self, ctx: discord.Interaction, requestChannel: discord.TextChannel, employee: discord.User, modelName: str, requestMsg: discord.Message, embed: discord.Embed, mmConfirmationMsg: discord.Message):
         super().__init__(title="Comment on MM") 
         self.ctx = ctx
         self.requestChannel = requestChannel
@@ -25,6 +25,7 @@ class MassMessageCommentModal(discord.ui.Modal, title="Comment on MM"):
         self.modelName =  modelName
         self.requestMsg = requestMsg
         self.embed = embed
+        self.mmConfirmationMsg = mmConfirmationMsg
            
         self.comment = discord.ui.TextInput(
             label="Comment:",
@@ -65,10 +66,11 @@ class MassMessageCommentModal(discord.ui.Modal, title="Comment on MM"):
         
         message = await self.requestChannel.send(f"{self.employee.mention} your mm for **{self.modelName}** request change by **{interaction.user.display_name}**\n_Commented mm:_", embed=self.embed)
         await message.edit(view=FixMmaView(message, interaction.channel, self.employee, interaction.channel.category.name, mmText))
+        await util.delete_message_ignore_exception(self.mmConfirmationMsg)
         await interaction.response.send_message(f"_Change requested_", ephemeral=True, delete_after=settings.DELETE_AFTER)
         
 class MassMessageApproveAndCommentModal(discord.ui.Modal, title="Approve and comment on MM"):
-    def __init__(self, ctx: discord.Interaction, requestChannel: discord.TextChannel, employee: discord.User, modelName: str, requestMsg: discord.Message, embed: discord.Embed):
+    def __init__(self, ctx: discord.Interaction, requestChannel: discord.TextChannel, employee: discord.User, modelName: str, requestMsg: discord.Message, embed: discord.Embed, mmConfirmationMsg: discord.Message):
         super().__init__(title="Approve and comment on MM") 
         self.ctx = ctx
         self.requestChannel = requestChannel
@@ -76,6 +78,7 @@ class MassMessageApproveAndCommentModal(discord.ui.Modal, title="Approve and com
         self.modelName =  modelName
         self.requestMsg = requestMsg
         self.embed = embed
+        self.mmConfirmationMsg = mmConfirmationMsg
            
         self.comment = discord.ui.TextInput(
             label="Comment:",
@@ -116,10 +119,11 @@ class MassMessageApproveAndCommentModal(discord.ui.Modal, title="Approve and com
         
         
         await self.requestChannel.send(f"{self.employee.mention} your mm for **{self.modelName}** was approved and commented by **{interaction.user.display_name}**\n**Message for clipboard:**\n{settings.LINE_TEXT}\n{originalMessage}\n{settings.LINE_TEXT}\n", embed=self.embed)
-        await interaction.response.send_message(f"_Change requested_", ephemeral=True, delete_after=settings.DELETE_AFTER)
+        await util.delete_message_ignore_exception(self.mmConfirmationMsg)
+        await interaction.response.send_message(f"_Approved the mm with comment_", ephemeral=True, delete_after=settings.DELETE_AFTER)
 
 class MmaView(discord.ui.View):
-    def __init__(self, mm: discord.Message, requestChannel: discord.TextChannel, employee: discord.User, modelName: str, embed: discord.Embed):
+    def __init__(self, mm: discord.Message, requestChannel: discord.TextChannel, employee: discord.User, modelName: str, embed: discord.Embed, mmConfirmationMsg: discord.Message):
         super().__init__(timeout=None)
         
         self.mm = mm
@@ -127,6 +131,7 @@ class MmaView(discord.ui.View):
         self.employee = employee
         self.modelName = modelName
         self.embed = embed
+        self.mmConfirmationMsg = mmConfirmationMsg
 
     @discord.ui.button(label="Approve", style=discord.ButtonStyle.green)
     async def approve(self, interaction: discord.Interaction, Button: discord.ui.Button):
@@ -143,16 +148,17 @@ class MmaView(discord.ui.View):
             f"{self.employee.mention} your mm for **{self.modelName}** was approved by **{interaction.user.display_name}**\n**Message for clipboard:**\n{settings.LINE_TEXT}\n{originalMessage}\n{settings.LINE_TEXT}\n",
             embed=self.embed
         )
+        await util.delete_message_ignore_exception(self.mmConfirmationMsg)
         await interaction.response.send_message(f"_Approved the mm_", ephemeral=True, delete_after=settings.DELETE_AFTER)
 
         
     @discord.ui.button(label="Approve with comment", style=discord.ButtonStyle.green)
     async def approveAndComment(self, interaction: discord.Interaction, Button: discord.ui.Button):
-        await interaction.response.send_modal(MassMessageApproveAndCommentModal(interaction, self.requestChannel, self.employee, self.modelName, self.mm, self.embed))
+        await interaction.response.send_modal(MassMessageApproveAndCommentModal(interaction, self.requestChannel, self.employee, self.modelName, self.mm, self.embed, self.mmConfirmationMsg))
         
     @discord.ui.button(label="Comment", style=discord.ButtonStyle.blurple)
     async def requestChange(self, interaction: discord.Interaction, Button: discord.ui.Button):
-        await interaction.response.send_modal(MassMessageCommentModal(interaction, self.requestChannel, self.employee, self.modelName, self.mm, self.embed))
+        await interaction.response.send_modal(MassMessageCommentModal(interaction, self.requestChannel, self.employee, self.modelName, self.mm, self.embed, self.mmConfirmationMsg))
         
     @discord.ui.button(label="Reject", style=discord.ButtonStyle.red)
     async def reject(self, interaction: discord.Interaction, Button: discord.ui.Button):
@@ -162,6 +168,7 @@ class MmaView(discord.ui.View):
             self.embed.color = discord.Color.red()
             self.embed.remove_footer()
             await self.requestChannel.send(f"{self.employee.mention} your mm for **{self.modelName}** was rejected by **{interaction.user.display_name}**\n_Rejected mm request:_", embed=self.embed)
+            await util.delete_message_ignore_exception(self.mmConfirmationMsg)
             await interaction.response.send_message(f"_Rejected the mm_", ephemeral=True, delete_after=settings.DELETE_AFTER)
         except:
             await interaction.response.send_message(f"_Rejected the mm but there was an error with sending the notification._", ephemeral=True, delete_after=settings.DELETE_AFTER)
@@ -217,6 +224,8 @@ class MassMessageModal(discord.ui.Modal, title="Submit MM"):
             thumbnail_path = "res/envelope.png"
             thumbnail_filename = "envelope.png"
             embed_message.set_thumbnail(url=f"attachment://{thumbnail_filename}")
+            
+            mmConfirmationMsg = await interaction.followup.send(f"_Processing your mm..._")
 
             with open(thumbnail_path, "rb") as file:
                 message = await channel.send(
@@ -224,8 +233,8 @@ class MassMessageModal(discord.ui.Modal, title="Submit MM"):
                     embed=embed_message,
                     file=discord.File(file, filename=thumbnail_filename)
                 )
-                await message.edit(view=MmaView(message, interaction.channel, interaction.user, interaction.channel.category.name, embed_message))
-                
+                await message.edit(view=MmaView(message, interaction.channel, interaction.user, interaction.channel.category.name, embed_message, mmConfirmationMsg))
+ 
             if self.commentedMMEmbed != None:
                 await self.commentedMMEmbed.edit(view=None)
                 
@@ -239,8 +248,8 @@ class MassMessageModal(discord.ui.Modal, title="Submit MM"):
             if not util.checkIfUserIsClockedInByIds(interaction=interaction, user_id=interaction.user.id, model_channel_id=interaction.channel_id):
                 database.insert_mma_sent(user_id=interaction.user.id, model_channel_id=interaction.channel_id)
                 
-            message = await interaction.followup.send(f"{interaction.user.mention} Thank you for submitting your mm, it will be reviewed!")
-            asyncio.create_task(delete_message_after_delay(message, settings.DELETE_AFTER))
+            await mmConfirmationMsg.edit(content=f"{interaction.user.mention} Thank you for submitting your mm, it will be reviewed!")
+            asyncio.create_task(delete_message_after_delay(mmConfirmationMsg, settings.DELETE_SUBMITTED_MM_AFTER))
         except Exception as e:
             message = await interaction.followup.send(f"_Error submitting the mm, contact staff {e}_")
             asyncio.create_task(delete_message_after_delay(message, settings.DELETE_AFTER))
