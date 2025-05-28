@@ -20,6 +20,7 @@ class MyClient(commands.Bot):
     async def on_ready(self):
         log = settings.logging.getLogger()
         log.info(f'Logged in as {self.user}')
+        log.info(f"Commands sync in progress...")
         
         self.scheduler = schedule.Scheduler(self, settings.logging.getLogger())
         
