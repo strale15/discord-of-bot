@@ -27,8 +27,8 @@ class Scheduler:
     def __init__(self, bot: commands.Bot, log: Logger):
         self.bot = bot
         self.log = log
-        self.offday_msg = self.read_announcement_from_file('offDayMsg.txt')
-        self.payment_msg = self.read_announcement_from_file('paymentMsg.txt')
+        self.offday_msg = self.read_announcement_from_file('resources/offDayMsg.txt')
+        self.payment_msg = self.read_announcement_from_file('resources/paymentMsg.txt')
         
         self.task.start()
         self.mmPing.start()

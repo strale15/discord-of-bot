@@ -8,7 +8,7 @@ import datetime
 from classes import sheets, database
 import util
 from util import *
-import ndacheck
+import nda.ndacheck as ndacheck
 
 log = settings.logging.getLogger()
 user_cooldowns = {}

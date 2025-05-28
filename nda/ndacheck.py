@@ -8,7 +8,7 @@ from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 from datetime import datetime
-import signatureScan
+import nda.signatureScan as signatureScan
 
 SCOPES = ["https://www.googleapis.com/auth/drive.file"]
 
