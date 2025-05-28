@@ -16,6 +16,7 @@ def remove_mm_from_queue(message: discord.Message):
     with lock:
         schedule.mm_time_queue.remove_by_key(message.id)
 
+#COMMENT MMA MODAL
 class MassMessageCommentModal(discord.ui.Modal, title="Comment on MM"):
     def __init__(self, ctx: discord.Interaction, requestChannel: discord.TextChannel, employee: discord.User, modelName: str, requestMsg: discord.Message, embed: discord.Embed, mmConfirmationMsg: discord.Message):
         super().__init__(title="Comment on MM") 
@@ -66,9 +67,11 @@ class MassMessageCommentModal(discord.ui.Modal, title="Comment on MM"):
         
         message = await self.requestChannel.send(f"{self.employee.mention} your mm for **{self.modelName}** request change by **{interaction.user.display_name}**\n_Commented mm:_", embed=self.embed)
         await message.edit(view=FixMmaView(message, interaction.channel, self.employee, interaction.channel.category.name, mmText))
-        await util.delete_message_ignore_exception(self.mmConfirmationMsg)
-        await interaction.response.send_message(f"_Change requested_", ephemeral=True, delete_after=settings.DELETE_AFTER)
         
+        await util.delete_message_ignore_exception(self.mmConfirmationMsg, source="MMA Comment")
+        await interaction.response.send_message(f"_Change requested_", ephemeral=True, delete_after=settings.DELETE_AFTER)
+
+#APPROVE COMMENT MMA MODAL
 class MassMessageApproveAndCommentModal(discord.ui.Modal, title="Approve and comment on MM"):
     def __init__(self, ctx: discord.Interaction, requestChannel: discord.TextChannel, employee: discord.User, modelName: str, requestMsg: discord.Message, embed: discord.Embed, mmConfirmationMsg: discord.Message):
         super().__init__(title="Approve and comment on MM") 
@@ -119,9 +122,10 @@ class MassMessageApproveAndCommentModal(discord.ui.Modal, title="Approve and com
         
         
         await self.requestChannel.send(f"{self.employee.mention} your mm for **{self.modelName}** was approved and commented by **{interaction.user.display_name}**\n**Message for clipboard:**\n{settings.LINE_TEXT}\n{originalMessage}\n{settings.LINE_TEXT}\n", embed=self.embed)
-        await util.delete_message_ignore_exception(self.mmConfirmationMsg)
+        await util.delete_message_ignore_exception(self.mmConfirmationMsg, source="MMA Approve and comment")
         await interaction.response.send_message(f"_Approved the mm with comment_", ephemeral=True, delete_after=settings.DELETE_AFTER)
 
+#BUTTON FOR MMA REQUEST (approve, approve with comment, comment, reject)
 class MmaView(discord.ui.View):
     def __init__(self, mm: discord.Message, requestChannel: discord.TextChannel, employee: discord.User, modelName: str, embed: discord.Embed, mmConfirmationMsg: discord.Message):
         super().__init__(timeout=None)
@@ -148,7 +152,7 @@ class MmaView(discord.ui.View):
             f"{self.employee.mention} your mm for **{self.modelName}** was approved by **{interaction.user.display_name}**\n**Message for clipboard:**\n{settings.LINE_TEXT}\n{originalMessage}\n{settings.LINE_TEXT}\n",
             embed=self.embed
         )
-        await util.delete_message_ignore_exception(self.mmConfirmationMsg)
+        await util.delete_message_ignore_exception(self.mmConfirmationMsg, source="MMA Approve")
         await interaction.response.send_message(f"_Approved the mm_", ephemeral=True, delete_after=settings.DELETE_AFTER)
 
         
@@ -168,11 +172,13 @@ class MmaView(discord.ui.View):
             self.embed.color = discord.Color.red()
             self.embed.remove_footer()
             await self.requestChannel.send(f"{self.employee.mention} your mm for **{self.modelName}** was rejected by **{interaction.user.display_name}**\n_Rejected mm request:_", embed=self.embed)
-            await util.delete_message_ignore_exception(self.mmConfirmationMsg)
+            
+            await util.delete_message_ignore_exception(self.mmConfirmationMsg, source="MMA Reject")
             await interaction.response.send_message(f"_Rejected the mm_", ephemeral=True, delete_after=settings.DELETE_AFTER)
         except:
             await interaction.response.send_message(f"_Rejected the mm but there was an error with sending the notification._", ephemeral=True, delete_after=settings.DELETE_AFTER)
-            
+
+#'FIX ME' BUTTON ON COMMENTED MM (so chatters can fix them without typing /mma)     
 class FixMmaView(discord.ui.View):
     def __init__(self, mm: discord.Message, requestChannel: discord.TextChannel, employee: discord.User, modelName: str, message: str):
         super().__init__(timeout=None)
@@ -190,6 +196,7 @@ class FixMmaView(discord.ui.View):
         else:
             await interaction.response.send_message(f"_This is not your mm._", ephemeral=True, delete_after=settings.DELETE_AFTER)
 
+#MODAL THAT CHATTERS USE TO SUBMIT MM FOR REVIEW
 class MassMessageModal(discord.ui.Modal, title="Submit MM"):
     def __init__(self, message: str = "", commentedMMEmbed: discord.Message=None):
         super().__init__(title="Submit MM")
