@@ -160,6 +160,6 @@ async def delete_message_ignore_exception(message: discord.Message, source: str=
         await message.delete()
     except Exception as e:
         if source is not None:
-            log.warning(f"Failed to delete message ({source}): {e}")
+            log.warning(f"Failed to delete message with id {message.id} ({source}): {e}")
         #ignore exception
         pass
