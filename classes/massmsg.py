@@ -232,7 +232,7 @@ class MassMessageModal(discord.ui.Modal, title="Submit MM"):
             thumbnail_filename = "envelope.png"
             embed_message.set_thumbnail(url=f"attachment://{thumbnail_filename}")
             
-            mmConfirmationMsg = await interaction.followup.send(f"_Processing your mm..._")
+            mmConfirmationMsg = await interaction.followup.send(f"_Processing your mm..._", ephemeral=True)
 
             with open(thumbnail_path, "rb") as file:
                 message = await channel.send(
