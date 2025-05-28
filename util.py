@@ -3,6 +3,8 @@ import discord
 import settings
 import asyncio
 
+log = settings.logging.getLogger()
+
 def getUserClockInChannel(user: discord.Member) -> discord.VoiceChannel:
     guild = user.guild
     userRoles = user.roles
@@ -153,9 +155,11 @@ async def delete_message_after_delay(message: discord.Message, delay: int):
     await asyncio.sleep(delay)
     await delete_message_ignore_exception(message)
     
-async def delete_message_ignore_exception(message: discord.Message):
+async def delete_message_ignore_exception(message: discord.Message, source: str=None):
     try:
         await message.delete()
-    except:
+    except Exception as e:
+        if source is not None:
+            log.warning(f"Failed to delete message with id {message.id} ({source}): {e}")
         #ignore exception
         pass

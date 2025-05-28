@@ -1,0 +1,15 @@
+version: '3.9'
+
+services:
+  mariadb:
+    image: mariadb:10.11
+    restart: always
+    ports:
+      - '3306:3306'
+    environment:
+      MARIADB_ROOT_PASSWORD: rootpass
+      MARIADB_DATABASE: customer_931178_xic
+      MARIADB_USER: customer_931178_xic
+      MARIADB_PASSWORD: rootpass
+    volumes:
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql

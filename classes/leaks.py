@@ -52,7 +52,7 @@ class LeakModal(discord.ui.Modal, title="Submit a leak"):
                 embed_message.add_field(name="Details:", value=self.details.value, inline=False)
             embed_message.set_footer(text="Resolve:")
             
-            thumbnail_path = "res/leak.png"
+            thumbnail_path = "resources/icons/leak.png"
             thumbnail_filename = "leak.png"
             embed_message.set_thumbnail(url=f"attachment://{thumbnail_filename}")
 

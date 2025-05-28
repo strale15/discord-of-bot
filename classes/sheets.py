@@ -1,12 +1,13 @@
-import datetime
-import settings
 import gspread
-from google.oauth2.service_account import Credentials
 import calendar
+import datetime
 from datetime import datetime
+from google.oauth2.service_account import Credentials
+
+import settings
 
 scopes = ["https://www.googleapis.com/auth/spreadsheets"]
-key = Credentials.from_service_account_file("key.json", scopes=scopes)
+key = Credentials.from_service_account_file("sheets/sheet-key.json", scopes=scopes)
 client = gspread.authorize(key)
 
 workbook = client.open_by_key(settings.SHEET_ID)
@@ -26,7 +27,6 @@ class FineRow:
     def discordFormat(self) -> str:
         amount = str(self.amount) + "$"
         return f"username={self.username:15} amount={amount:<5} date={self.date:11} reason={self.reason}"
-
 
 
 def test():
@@ -170,6 +170,3 @@ def is_form_filled(discord_nick: str):
         if nick.lower().lstrip('@') == discord_nick.lower().lstrip('@'):
             return True
     return False
-    
-    
-    

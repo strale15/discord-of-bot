@@ -1,5 +1,6 @@
-key.json
-clocklog.txt
+# Secrets
+nda/drive-key.json
+sheets/sheet-key.json
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -8,7 +9,7 @@ __pycache__/
 bot-env/
 logs/
 .vscode/
-nda/
+
 
 # C extensions
 *.so

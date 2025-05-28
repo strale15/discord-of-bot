@@ -70,7 +70,7 @@ class VoiceModal(discord.ui.Modal, title="Submit voice request"):
                 embed_message.add_field(name="Details:", value=self.details.value, inline=False)
             embed_message.set_footer(text="Decision:")
             
-            thumbnail_path = "res/speaker.png"
+            thumbnail_path = "resources/icons/speaker.png"
             thumbnail_filename = "speaker.png"
             embed_message.set_thumbnail(url=f"attachment://{thumbnail_filename}")
 
