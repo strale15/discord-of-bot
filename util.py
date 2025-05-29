@@ -1,4 +1,5 @@
 import dis
+import math
 import discord
 import settings
 import asyncio
@@ -157,9 +158,17 @@ async def delete_message_after_delay(message: discord.Message, delay: int):
     
 async def delete_message_ignore_exception(message: discord.Message, source: str=None):
     try:
-        await message.delete()
+        fetched_message = await message.channel.fetch_message(message.id)
+        await fetched_message.delete()
     except Exception as e:
         if source is not None:
             log.warning(f"Failed to delete message with id {message.id} ({source}): {e}")
         #ignore exception
         pass
+    
+async def renameChannelRateLimit(channel: discord.VoiceChannel, newName: str):
+    try:
+        await asyncio.wait_for(channel.edit(name=newName), timeout=7.0)
+        return True, 0.0
+    except (asyncio.TimeoutError, discord.HTTPException):
+        return False, 10.0

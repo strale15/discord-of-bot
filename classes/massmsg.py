@@ -218,7 +218,7 @@ class MassMessageModal(discord.ui.Modal, title="Submit MM"):
 
     
     async def on_submit(self, interaction: discord. Interaction):
-        await interaction.response.defer(ephemeral=True)
+        await interaction.response.defer(ephemeral=False)
         try:
             #Send mm for review
             channel = util.getMmaApprovalChannel(interaction)
@@ -232,7 +232,7 @@ class MassMessageModal(discord.ui.Modal, title="Submit MM"):
             thumbnail_filename = "envelope.png"
             embed_message.set_thumbnail(url=f"attachment://{thumbnail_filename}")
             
-            mmConfirmationMsg = await interaction.followup.send(f"_Processing your mm..._", ephemeral=True)
+            mmConfirmationMsg = await interaction.followup.send(f"_Processing your mm..._", ephemeral=False)
 
             with open(thumbnail_path, "rb") as file:
                 message = await channel.send(

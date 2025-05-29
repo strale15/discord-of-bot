@@ -54,9 +54,12 @@ class ModelSetupCog(commands.Cog):
     @app_commands.default_permissions(manage_channels=True)
     @app_commands.command(name="recruit", description="Create basic category and channel for a model")
     async def recruit(self, interaction: discord.Interaction, model_name: str):
+        await interaction.response.defer(ephemeral=True)
+        
         alreadyExistingCategory = getCategoryByName(interaction.guild, model_name)
         if alreadyExistingCategory is not None:
-            await interaction.response.send_message(f"_{model_name} category is already setup!_", ephemeral=True, delete_after=settings.DELETE_AFTER)
+            message = await interaction.followup.send(f"_{model_name} category is already setup!_")
+            asyncio.create_task(delete_message_after_delay(message, settings.DELETE_AFTER))
             return
         
         roleName = f"Team {model_name}"
@@ -79,18 +82,25 @@ class ModelSetupCog(commands.Cog):
             await interaction.guild.create_text_channel(f"💬-{model_name}-staff-chat", category=createdCategory)
             await interaction.guild.create_text_channel(f"📰-{model_name}-info", category=createdCategory)
             await interaction.guild.create_text_channel(f"📷-{model_name}-customs", category=createdCategory)
-            await interaction.response.send_message(f"_Successfully created {model_name} model space, you can now use /setup in staff chat to create clock in vc!_", ephemeral=True, delete_after=settings.DELETE_AFTER)
+            message = await interaction.followup.send(f"_Successfully created {model_name} model space, you can now use /setup in staff chat to create clock in vc!_")
+            asyncio.create_task(delete_message_after_delay(message, settings.DELETE_AFTER))
         except Exception as e:
-            await interaction.response.send_message(f"_Channel creation failed {e}_", ephemeral=True, delete_after=settings.DELETE_AFTER)
+            message = await interaction.followup.send(f"_Channel creation failed {e}_")
+            asyncio.create_task(delete_message_after_delay(message, settings.DELETE_AFTER))
             
     #Clean model info
     @app_commands.checks.has_permissions(manage_channels=True)
     @app_commands.default_permissions(manage_channels=True)
     @app_commands.command(name="delete-model-info", description="Deletes all model info (categories, channels, role)")
     async def deleteModelInfo(self, interaction: discord.Interaction, model_name: str):
+        await interaction.response.defer(ephemeral=True)
         model_name = model_name.lower()
         
         try:
+            modelRole = getRoleByName(interaction.guild, model_name)
+            if modelRole is not None:
+                await modelRole.delete()
+                
             #Remove model category
             modelCategory = getCategoryByName(interaction.guild, model_name)
             for channel in modelCategory.channels:
@@ -104,13 +114,18 @@ class ModelSetupCog(commands.Cog):
                     await channel.delete()
                     break
                     
-            modelRole = getRoleByName(interaction.guild, model_name)
-            if modelRole is not None:
-                await modelRole.delete()
-                
-            await interaction.response.send_message(f"Successfully deleted all {model_name} info!", ephemeral=True, delete_after=settings.DELETE_AFTER)
+            try:
+                message = await interaction.followup.send(f"Successfully deleted all {model_name} info!")
+                asyncio.create_task(delete_message_after_delay(message, settings.DELETE_AFTER))
+            except discord.errors.NotFound:
+                pass
+            
         except Exception as e:
-            await interaction.response.send_message(f"Failed to delete model info: {e}", ephemeral=True, delete_after=settings.DELETE_AFTER)
+            try:
+                message = await interaction.followup.send(f"Failed to delete model info: {e}")
+                asyncio.create_task(delete_message_after_delay(message, settings.DELETE_AFTER))
+            except discord.errors.NotFound:
+                pass
             
     async def cog_load(self):
         self.bot.tree.add_command(self.setupClockInChannel, guild=settings.GUILD_ID)

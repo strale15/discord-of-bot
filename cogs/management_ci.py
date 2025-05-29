@@ -28,7 +28,11 @@ class ManagementCiCog(commands.Cog):
         
         username = interaction.user.display_name
         newChannelName = f"{clockInChannel.name}, {username}" if clockInChannel.name[-1] != '-' else f"{settings.TICK_EMOJI}{clockInChannel.name[1:]} {username}"
-        await clockInChannel.edit(name=newChannelName)
+        
+        status, wait_time = await renameChannelRateLimit(clockInChannel, newChannelName)
+        if status is False:
+            await interaction.response.send_message(f"Unable to ci/co now, please try again in **{wait_time} minutes.** [_Rate limited_]", ephemeral=True, delete_after=settings.DELETE_AFTER)
+            return
         
         await interaction.response.send_message(f"You are now clocked in", ephemeral=False)
         
@@ -57,7 +61,10 @@ class ManagementCiCog(commands.Cog):
         else:
             newChannelName = getBaseChannelName(clockInChannel.name) + " - " + ', '.join(usernames)
             
-        await clockInChannel.edit(name=newChannelName)
+        status, wait_time = await renameChannelRateLimit(clockInChannel, newChannelName)
+        if status is False:
+            await interaction.response.send_message(f"Unable to ci/co now, please try again in **{wait_time} minutes.** [_Rate limited_]", ephemeral=True, delete_after=settings.DELETE_AFTER)
+            return
         
         await interaction.response.send_message(f"You are now clocked out", ephemeral=False)
         
