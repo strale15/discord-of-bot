@@ -1,5 +1,0 @@
-CO [2025-03-09 15:39:34] - username: ribljikurac - model: kurac
-CI [2025-03-09 17:45:31] - username: ribljikurac - role: supervisor
-CO [2025-03-09 17:48:44] - username: ribljikurac - role: supervisor
-CI [2025-03-09 17:48:51] - username: marko9078 - role: manager
-CO [2025-03-09 17:48:54] - username: marko9078 - role: manager
