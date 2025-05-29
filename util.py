@@ -163,12 +163,10 @@ async def delete_message_ignore_exception(message: discord.Message, source: str=
         try:
             fetched_message = await message.channel.fetch_message(message.id)
             await fetched_message.delete()
-            log.info("Deleted msg ig")
         except Exception as e:
             if source is not None:
                 log.warning(f"Failed to delete message with id {message.id} ({source}): {e}")
             #ignore exception
-            log.error(e)
             pass
     
 async def renameChannelRateLimit(channel: discord.VoiceChannel, newName: str):
