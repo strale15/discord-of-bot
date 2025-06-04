@@ -22,7 +22,7 @@ class NdaCog(commands.Cog):
         self.bot = bot 
         
     @commands.Cog.listener()
-    async def on_member_join(member: discord.Member):
+    async def on_member_join(self, member: discord.Member):
         if member.guild.id != settings.TRAIN_GUILD_ID_INT:
             return
         
