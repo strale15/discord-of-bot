@@ -12,7 +12,7 @@ class Misc(commands.Cog):
 
     @app_commands.command(name="ping", description="Check bot latency")
     async def ping(self, interaction: discord.Interaction):
-        await interaction.response.send_message(f"Hi! Latency: {self.bot.latency}", ephemeral=True)
+        await interaction.response.send_message(f"[Version: 1.1.2] Latency: {self.bot.latency}", ephemeral=True)
         
     #Format command
     @app_commands.checks.has_permissions(manage_channels=True)
