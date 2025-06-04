@@ -82,6 +82,13 @@ class ModelSetupCog(commands.Cog):
             await interaction.guild.create_text_channel(f"💬-{model_name}-staff-chat", category=createdCategory)
             await interaction.guild.create_text_channel(f"📰-{model_name}-info", category=createdCategory)
             await interaction.guild.create_text_channel(f"📷-{model_name}-customs", category=createdCategory)
+            
+            #Update chatter announcement channel permissions
+            announcement_channel = interaction.guild.get_channel(settings.CHATTER_ANNOUNCEMENT_CHANNEL_ID)
+            announcement_overwrites = announcement_channel.overwrites
+            announcement_overwrites[modelRole] = discord.PermissionOverwrite(view_channel=True, read_messages=True)
+            await announcement_channel.edit(overwrites=announcement_overwrites)
+            
             message = await interaction.followup.send(f"_Successfully created {model_name} model space, you can now use /setup in staff chat to create clock in vc!_")
             asyncio.create_task(delete_message_after_delay(message, settings.DELETE_AFTER))
         except Exception as e:
