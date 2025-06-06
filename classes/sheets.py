@@ -10,7 +10,7 @@ scopes = ["https://www.googleapis.com/auth/spreadsheets"]
 key = Credentials.from_service_account_file("sheets/sheet-key.json", scopes=scopes)
 client = gspread.authorize(key)
 
-workbook = client.open_by_key(settings.SHEET_ID)
+workbook = client.open_by_key(settings.FINES_REFERRALS_SHEET_ID)
 train_workbook = client.open_by_key(settings.TRAIN_FORM_SHEET_ID)
 
 finesSheet = workbook.get_worksheet(0)

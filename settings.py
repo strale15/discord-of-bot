@@ -9,7 +9,6 @@ load_dotenv()
 
 LINE_TEXT = "**---------------------------------------------------------------------------------**"
 
-DISCORD_API_SECRET = os.getenv("DISCORD_API_TOKEN")
 
 BASE_DIR = pathlib.Path(__file__).parent
 
@@ -21,20 +20,26 @@ VIDEOCMDS_DIR = BASE_DIR / "videocmds"
 CROSS_EMOJI = "❌"
 TICK_EMOJI = "✅"
 
+# Bot token and message delete timing
+DISCORD_API_SECRET = os.getenv("DISCORD_API_TOKEN")
+
 DELETE_AFTER = int(os.getenv("DELETE_AFTER"))
 DELETE_SUBMITTED_MM_AFTER = int(os.getenv("DELETE_SUBMITTED_MM_AFTER"))
 
-
-SHEET_ID = os.getenv("SHEET_ID")
+############################################################################
+#                           Drive and Google Sheets
+############################################################################
+FINES_REFERRALS_SHEET_ID = os.getenv("FINES_REFERRALS_SHEET_ID")
+DRIVE_FOLDER_ID = os.getenv("DRIVE_FOLDER_ID")
 TRAIN_FORM_SHEET_ID = os.getenv("TRAIN_FORM_SHEET_ID")
 
-#Main guild
+############################################################################
+#                            XIC Main INFO
+############################################################################
 GUILD_ID_INT = int(os.getenv("GUILD_ID"))
 GUILD_ID = discord.Object(id=GUILD_ID_INT)
 
-M_GUILD_ID_INT = int(os.getenv("M_GUILD_ID"))
-M_GUILD_ID = discord.Object(id=M_GUILD_ID_INT)
-
+# XIC Main channels
 MMA_APPROVAL_ID = int(os.getenv("MMA_APPROVAL_ID"))
 CUSTOMS_QUEUE_ID = int(os.getenv("CUSTOMS_QUEUE_ID"))
 VOICE_QUEUE_ID = int(os.getenv("VOICE_QUEUE_ID"))
@@ -42,52 +47,67 @@ LEAKS_QUEUE_ID = int(os.getenv("LEAKS_QUEUE_ID"))
 FINES_CHANNEL_ID = int(os.getenv("FINES_CHANNEL_ID"))
 CHATTER_ANNOUNCEMENT_CHANNEL_ID = int(os.getenv("CHATTER_ANNOUNCEMENT_CHANNEL_ID"))
 
+# XIC Main roles
 CONSULT_ROLE_ID = int(os.getenv("CONSULT_ROLE_ID"))
 SUPERVISOR_ROLE_ID = int(os.getenv("SUPERVISOR_ROLE_ID"))
 PPV_ENG_ROLE_ID = int(os.getenv("PPV_ENG_ROLE_ID"))
 MANAGEMENT_ROLE_ID = int(os.getenv("MANAGEMENT_ROLE_ID"))
 
+# XIC Main MM ping system
+MM_MIN_PING = float(os.getenv("MM_MIN_PING"))
+MM_MIN_WAIT = float(os.getenv("MM_MIN_WAIT"))
+DELETE_PING_AFTER = int(os.getenv("DELETE_PING_AFTER"))
+CHATTER_MM_PING_TIME = int(os.getenv("CHATTER_MM_PING_TIME"))
+CHATTER_MM_GRACE_DURATION = int(os.getenv("CHATTER_MM_GRACE_DURATION"))
+
+############################################################################
+#                           XIC Management INFO
+############################################################################
+M_GUILD_ID_INT = int(os.getenv("M_GUILD_ID"))
+M_GUILD_ID = discord.Object(id=M_GUILD_ID_INT)
+
+# Management clock channels
+M_CONSULTANT_CLOCK_CHANNEL = int(os.getenv("M_CONSULTANT_CLOCK_CHANNEL"))
+M_MANAGEMENT_CLOCK_CHANNEL = int(os.getenv("M_MANAGEMENT_CLOCK_CHANNEL"))
+M_SUPERVISOR_CLOCK_CHANNEL = int(os.getenv("M_SUPERVISOR_CLOCK_CHANNEL"))
+M_PPV_ENG_CLOCK_CHANNEL = int(os.getenv("M_PPV_ENG_CLOCK_CHANNEL"))
+
+# Management roles
 M_MANAGEMENT_ROLE_ID = int(os.getenv("M_MANAGEMENT_ROLE_ID"))
 M_SUPERVISOR_ROLE_ID = int(os.getenv("M_SUPERVISOR_ROLE_ID"))
 M_PPV_ENG_ROLE_ID = int(os.getenv("M_PPV_ENG_ROLE_ID"))
 M_CONSULTANT_ROLE_ID = int(os.getenv("M_CONSULTANT_ROLE_ID"))
 
-M_MANAGEMENT_CLOCK_CHANNEL = int(os.getenv("M_MANAGEMENT_CLOCK_CHANNEL"))
-M_SUPERVISOR_CLOCK_CHANNEL = int(os.getenv("M_SUPERVISOR_CLOCK_CHANNEL"))
-M_PPV_ENG_CLOCK_CHANNEL = int(os.getenv("M_PPV_ENG_CLOCK_CHANNEL"))
-M_CONSULTANT_CLOCK_CHANNEL = int(os.getenv("M_CONSULTANT_CLOCK_CHANNEL"))
-
-#Announcement
+############################################################################
+#                           XIC Announcement INFO
+############################################################################
 ANNOUNCEMENT_GUILD_ID_INT = int(os.getenv("ANNOUNCEMENT_GUILD_ID"))
 ANNOUNCEMENT_GUILD_ID = discord.Object(id=ANNOUNCEMENT_GUILD_ID_INT)
+
 ANNOUNCEMENT_CHANNEL_ID = int(os.getenv("ANNOUNCEMENT_CHANNEL_ID"))
 
 OFF_DAY_SEND_TIME = os.getenv("OFF_DAY_SEND_TIME")
 PAYMENT_SEND_TIME = os.getenv("PAYMENT_SEND_TIME")
 PAYMENT_SEND_DAY = int(os.getenv("PAYMENT_SEND_DAY"))
 
-#Ping management
-MM_MIN_PING = float(os.getenv("MM_MIN_PING"))
-MM_MIN_WAIT = float(os.getenv("MM_MIN_WAIT"))
-DELETE_PING_AFTER = int(os.getenv("DELETE_PING_AFTER"))
-
-#Train
+############################################################################
+#                           XIC Training INFO
+############################################################################
 TRAIN_GUILD_ID_INT = int(os.getenv("TRAIN_GUILD_ID"))
 TRAIN_GUILD_ID = discord.Object(id=TRAIN_GUILD_ID_INT)
 
 TRAINEE_ROLE_ID = int(os.getenv("TRAINEE_ROLE_ID"))
+CHATTER_ROLE_ID = int(os.getenv("CHATTER_ROLE_ID"))
+TRAINER_ROLE_ID = int(os.getenv("TRAINER_ROLE_ID"))
 NDA_SIGNED_ROLE_ID = int(os.getenv("NDA_SIGNED_ROLE_ID"))
 WELCOME_ROLE_ID = int(os.getenv("WELCOME_ROLE_ID"))
 
 SEND_NDA_COOLDOWN = int(os.getenv("SEND_NDA_COOLDOWN"))
 SEND_NDA_PDF_COOLDOWN = int(os.getenv("SEND_NDA_PDF_COOLDOWN"))
 
-DRIVE_FOLDER_ID = os.getenv("DRIVE_FOLDER_ID")
-
-#Chatter mm ping
-CHATTER_MM_PING_TIME = int(os.getenv("CHATTER_MM_PING_TIME"))
-CHATTER_MM_GRACE_DURATION = int(os.getenv("CHATTER_MM_GRACE_DURATION"))
-
+############################################################################
+#                           Additional INFO
+############################################################################
 DB_HOST = os.getenv("DB_HOST")
 DB_PORT = int(os.getenv("DB_PORT"))
 DB_NAME = os.getenv("DB_NAME")
