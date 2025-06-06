@@ -23,6 +23,9 @@ class TrainCog(commands.Cog):
 
         await interaction.response.send_message(f"You're in voice with: {', '.join(member_names)}", ephemeral=True)
         
+    def func(self):
+        pass
+        
     async def cog_load(self):
         self.bot.tree.add_command(self.giveHomework, guild=settings.TRAIN_GUILD_ID)
 

@@ -24,3 +24,14 @@ CREATE TABLE IF NOT EXISTS nda_signed (
   sign_time datetime DEFAULT NULL,
   PRIMARY KEY (user_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+
+CREATE TABLE IF NOT EXISTS `hw_schedule` (
+  `id` uuid NOT NULL,
+  `img_id` varchar(100) NOT NULL,
+  `trainee_id` varchar(100) NOT NULL,
+  `completed` tinyint(1) DEFAULT 0,
+  `start_time` timestamp NULL DEFAULT NULL,
+  `end_time` timestamp NULL DEFAULT NULL,
+  `completion_time` double DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
