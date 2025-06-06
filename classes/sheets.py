@@ -27,11 +27,7 @@ class FineRow:
     def discordFormat(self) -> str:
         amount = str(self.amount) + "$"
         return f"username={self.username:15} amount={amount:<5} date={self.date:11} reason={self.reason}"
-
-
-def test():
-    sheets = map(lambda x: x.title, workbook.worksheets())
-    print(list(sheets))
+    
     
 def addFine(username, reason, amount: int, date) -> bool:
     empty_row = -1

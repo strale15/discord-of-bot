@@ -1,9 +1,12 @@
 import discord
 from discord.ext import commands
 from discord import app_commands, Interaction
+import random
 
 import settings
 from util import *
+import util
+from classes import trainingdb as db
 
 class TrainCog(commands.Cog):
     def __init__(self, bot):
@@ -19,8 +22,10 @@ class TrainCog(commands.Cog):
             return
         
         trainees = await self.extract_trainees_from_voice(interaction)
-        for trainee in trainees:
-            await self.generate_hw_for_trainee(interaction, trainee)
+        
+        if trainees is not None and len(trainees) > 0:
+            for trainee in trainees:
+                await self.generate_hw_for_trainee(interaction, trainee)
             
         await interaction.followup.send("Successfully generated homework for all trainees.")
         
@@ -47,11 +52,36 @@ class TrainCog(commands.Cog):
         
         return trainees
     
-    async def generate_hw_for_trainee(self, interaction: discord.Interaction, trinee: discord.Member):
+    async def generate_hw_for_trainee(self, interaction: discord.Interaction, trainee: discord.Member):
+        existing_img_ids = db.get_img_ids_for_trainee(trainee.id)
+        img_id = self.generate_random_img_id(existing_img_ids)
+        
+        if img_id is None:
+            await self.send_dm(trainee, "Congrats, you have completed all available homeworks for now!")
+            return
+        
         try:
-            await trinee.send("Hi. This is a test hw msg.")
+            db.insert_hw_schedule(img_id=img_id, trainee_id=trainee.id)
+            await self.send_dm(trainee, f"Homework with id: {img_id} was generated for you.")
+        except:
+            log.warning(f"Error generating homework for {trainee.display_name}")
+            
+    def generate_random_img_id(self, existing_img_ids):
+        num_of_ctx_imgs = util.countContextImages()
+        if len(existing_img_ids) >= num_of_ctx_imgs:
+            return None
+        
+        while True:
+            num = random.randint(1, num_of_ctx_imgs)
+            img_id = f"ctx_{num:03}"
+            if img_id not in existing_img_ids:
+                return img_id
+            
+    async def send_dm(self, memeber: discord.Member, msg):
+        try:
+            await memeber.send(msg)
         except discord.Forbidden:
-            log.info(f"Could not send a join DM to {trinee.name}")
+            log.info(f"Could not send a join DM to {memeber.name}")
         
     async def cog_load(self):
         self.bot.tree.add_command(self.giveHomework, guild=settings.TRAIN_GUILD_ID)

@@ -13,6 +13,8 @@ from customlist import LinkedListQueue
 import util
 from classes import database
 
+log = settings.logging.getLogger()
+
 timezone = pytz.timezone("America/Chicago")
 
 mm_time_queue = LinkedListQueue()
@@ -90,7 +92,7 @@ class Scheduler:
                 await self.pingChatterMM(chatter_id=int(chatter_id), model_channel_id=int(model_channel_id))
                 database.delete_ping(chatter_id=chatter_id, model_channel_id=model_channel_id)
             except Exception as e:
-                print(f"Error pinging {chatter_id} for {model_channel_id} error: {e}")
+                log.warning(f"Error pinging {chatter_id} for {model_channel_id} error: {e}")
                 
             
     async def publish_announcement(self, msg: str):

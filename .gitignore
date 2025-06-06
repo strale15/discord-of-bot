@@ -2,6 +2,9 @@
 nda/drive-key.json
 sheets/sheet-key.json
 
+# Train imgs
+resources/training/context_imgs/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

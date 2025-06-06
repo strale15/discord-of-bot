@@ -13,12 +13,13 @@ DB_CONFIG = {
     'database': settings.DB_NAME
 }
 
+log = settings.logging.getLogger()
 
 def connect():
     try:
         return mysql.connector.connect(**DB_CONFIG)
     except Error as e:
-        print(f"Error connecting to MySQL: {e}")
+        log.error(f"Error connecting to MySQL: {e}")
         return None
 
 
@@ -36,7 +37,7 @@ def insert_ping(chatter_id: str, model_channel_id: str):
         cursor.execute(query, (chatter_id, model_channel_id))
         conn.commit()
     except Error as e:
-        print(f"Insert error: {e}")
+        log.warning(f"Insert error: {e}")
     finally:
         cursor.close()
         conn.close()
@@ -56,7 +57,7 @@ def insert_mma_sent(user_id: str, model_channel_id: str):
         cursor.execute(query, (user_id, model_channel_id))
         conn.commit()
     except Error as e:
-        print(f"Insert error: {e}")
+        log.warning(f"Insert error: {e}")
     finally:
         cursor.close()
         conn.close()
@@ -78,7 +79,7 @@ def get_old_pings(minutes: int):
         results = cursor.fetchall()
         return results
     except Error as e:
-        print(f"Query error: {e}")
+        log.warning(f"Query error: {e}")
         return []
     finally:
         cursor.close()
@@ -118,7 +119,7 @@ def is_mma_grace_period_on(user_id, model_channel_id):
 
         return is_grace
     except Error as e:
-        print(f"Query error: {e}")
+        log.warning(f"Query error: {e}")
         return False
     finally:
         cursor.close()
@@ -139,7 +140,7 @@ def delete_ping(chatter_id: str, model_channel_id: str):
         cursor.execute(query, (chatter_id, model_channel_id))
         conn.commit()
     except Error as e:
-        print(f"Delete error: {e}")
+        log.warning(f"Delete error: {e}")
     finally:
         cursor.close()
         conn.close()
@@ -169,9 +170,9 @@ def sign_nda(user_id: str, discord_nick: str, full_name: str):
             """
             cursor.execute(insert_query, (user_id, discord_nick, full_name))
             conn.commit()
-            print(f"User {user_id} inserted into nda_signed.")
+            log.info(f"User {user_id} inserted into nda_signed.")
         else:
-            print(f"User {user_id} already exists. Skipping insertion.")
+            log.info(f"User {user_id} already exists. Skipping insertion.")
 
     except Error as e:
         raise e
@@ -196,7 +197,7 @@ def is_nda_signed(user_id: str):
         count = cursor.fetchone()[0]
         return count > 0  # Return True if the user exists
     except Error as e:
-        print(f"Query error: {e}")
+        log.warning(f"Query error: {e}")
         return False
     finally:
         cursor.close()

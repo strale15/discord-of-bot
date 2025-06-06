@@ -1,4 +1,4 @@
-import fitz  # PyMuPDF
+import fitz
 import cv2
 from PIL import Image
 import numpy as np
@@ -8,9 +8,13 @@ from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 from datetime import datetime
+
 import nda.signatureScan as signatureScan
+import settings
 
 SCOPES = ["https://www.googleapis.com/auth/drive.file"]
+
+log = settings.logging.getLogger()
 
 def edit_nda_date():
     # Define paths
@@ -41,14 +45,14 @@ def authenticate():
             scopes=SCOPES  # Required scopes for Drive API
         )
     except Exception as e:
-        print(f"Error loading service account: {e}")
+        log.warning(f"Error loading google service account: {e}")
         return None
     return creds
 
 def upload_to_drive(file_path, folder_id=None):
     creds = authenticate()
     if not creds:
-        print("Authentication failed!")
+        log.warning("Authentication to google drive failed!")
         return
     service = build("drive", "v3", credentials=creds, cache_discovery=False)
 
@@ -64,7 +68,7 @@ def upload_to_drive(file_path, folder_id=None):
         media_body=media,
         fields="id"
     ).execute()
-    print(f"Uploaded to folder! File ID: {file.get('id')}")
+    log.info(f"Uploaded to folder! File ID: {file.get('id')}")
 
 def checkNda(path="nda/XIC_NDA.pdf"):
     path = path.lstrip("./")

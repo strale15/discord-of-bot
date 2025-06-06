@@ -3,6 +3,7 @@ import math
 import discord
 import settings
 import asyncio
+from pathlib import Path
 
 log = settings.logging.getLogger()
 
@@ -107,49 +108,49 @@ def getPPVEngRole(interaction: discord.Interaction) -> discord.Role:
 async def remove_role_by_ids(bot, guild_id: int, user_id: int, role_id: int):
     guild = await bot.fetch_guild(guild_id)
     if not guild:
-        print("Guild not found!")
+        log.warning("Guild not found!")
         return False
 
     user = await guild.fetch_member(user_id)
     if not user:
-        print("User not found in guild!")
+        log.warning(f"User with id {user_id} not found in guild with id {guild}!")
         return False
 
     role = guild.get_role(role_id)
     if not role:
-        print("Role not found!")
+        log.warning(f"Role with id:{role_id} not found!")
         return False
 
     try:
         await user.remove_roles(role)
-        print(f"Removed role {role.name} from {user.name}!")
+        log.info(f"Removed role {role.name} from {user.name}!")
         return True
     except Exception as e:
-        print(e)
+        log.warning(e)
         return False
     
 async def assign_role_by_ids(bot, guild_id: int, user_id: int, role_id: int):
     guild = await bot.fetch_guild(guild_id)
     if not guild:
-        print("Guild not found!")
+        log.warning(f"Guild with id {guild_id} not found!")
         return False
 
     user = await guild.fetch_member(user_id)
     if not user:
-        print("User not found in guild!")
+        log.warning(f"User with id {user_id} not found in guild with id {guild}!")
         return False
 
     role = guild.get_role(role_id)
     if not role:
-        print("Role not found!")
+        log.warning(f"Role with id:{role_id} not found!")
         return False
 
     try:
         await user.add_roles(role)
-        print(f"Assigned role {role.name} to {user.name}!")
+        log.info(f"Assigned role {role.name} to {user.name}!")
         return True
     except Exception as e:
-        print(e)
+        log.warning(e)
         return False
     
 async def delete_message_after_delay(message: discord.Message, delay: int):
@@ -175,3 +176,10 @@ async def renameChannelRateLimit(channel: discord.VoiceChannel, newName: str):
         return True, 0.0
     except (asyncio.TimeoutError, discord.HTTPException):
         return False, 10.0
+    
+def countContextImages() -> int:
+    folder = Path("resources/training/context_imgs")
+    image_extensions = {".png", ".jpg", ".jpeg"}
+
+    file_count = len([f for f in folder.iterdir() if f.is_file() and f.suffix.lower() in image_extensions])
+    return file_count
