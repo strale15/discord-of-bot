@@ -23,6 +23,137 @@ def connect():
         log.error(f"Error connecting to MySQL: {e}")
         return None
     
+def start_hw(img_id: str, trainee_id: str) -> bool:
+    conn = connect()
+    if not conn:
+        return False
+
+    try:
+        cursor = conn.cursor()
+        query = """
+        UPDATE hw_schedule
+        SET start_time = %s
+        WHERE img_id = %s AND trainee_id = %s
+        """
+        now = datetime.now(timezone.utc)
+        cursor.execute(query, (now, img_id, trainee_id))
+        conn.commit()
+
+        # Check if any row was actually updated
+        return cursor.rowcount > 0
+
+    except Error as e:
+        log.warning(f"Error updating start_time: {e}")
+        return False
+
+    finally:
+        cursor.close()
+        conn.close()
+        
+def is_hw_in_progress(img_id: str, trainee_id: str) -> bool:
+    conn = connect()
+    if not conn:
+        return False
+
+    try:
+        cursor = conn.cursor()
+        query = """
+        SELECT 1 FROM hw_schedule
+        WHERE img_id = %s
+          AND trainee_id = %s
+          AND start_time IS NOT NULL
+          AND end_time IS NULL
+          AND completed = 0
+        LIMIT 1
+        """
+        cursor.execute(query, (img_id, trainee_id))
+        result = cursor.fetchone()
+
+        return result is not None
+
+    except Error as e:
+        log.warning(f"Error checking hw in progress: {e}")
+        return False
+
+    finally:
+        cursor.close()
+        conn.close()
+    
+def is_hw_startable(img_id: str, trainee_id: str) -> bool:
+    conn = connect()
+    if not conn:
+        return False
+
+    try:
+        cursor = conn.cursor()
+        query = """
+        SELECT 1 FROM hw_schedule
+        WHERE trainee_id = %s AND img_id = %s AND completed = 0
+        LIMIT 1
+        """
+        cursor.execute(query, (trainee_id, img_id))
+        result = cursor.fetchone()
+
+        return result is not None  # True if a matching row exists
+
+    except Error as e:
+        log.warning(f"Error checking hw_schedule: {e}")
+        return False
+
+    finally:
+        cursor.close()
+        conn.close()
+        
+def end_hw(img_id: str, trainee_id: str, response: str) -> bool:
+    conn = connect()
+    if not conn:
+        return False
+
+    try:
+        cursor = conn.cursor(dictionary=True)
+
+        # 1. Fetch current start_time for the given img_id and trainee_id
+        select_query = """
+        SELECT start_time FROM hw_schedule
+        WHERE img_id = %s AND trainee_id = %s AND completed = 0
+        LIMIT 1
+        """
+        cursor.execute(select_query, (img_id, trainee_id))
+        row = cursor.fetchone()
+
+        if not row or not row['start_time']:
+            # No matching row or start_time is NULL, can't compute completion time
+            return False
+
+        start_time = row['start_time'].replace(tzinfo=timezone.utc)
+        end_time = datetime.now(timezone.utc)
+        completion_time = (end_time - start_time).total_seconds()
+
+        # Calculate completion_time in seconds (float)
+        completion_time = (end_time - start_time).total_seconds()
+
+        # 2. Update end_time, completed flag and completion_time
+        update_query = """
+        UPDATE hw_schedule
+        SET end_time = %s,
+            completed = 1,
+            completion_time = %s,
+            response = %s
+        WHERE img_id = %s AND trainee_id = %s AND completed = 0
+        """
+        cursor.execute(update_query, (end_time, completion_time, response, img_id, trainee_id))
+        conn.commit()
+
+        return cursor.rowcount > 0
+
+    except Error as e:
+        log.warning(f"Error submitting hw: {e}")
+        return False
+
+    finally:
+        cursor.close()
+        conn.close()
+    
 def insert_hw_schedule(img_id: str, trainee_id: str):
     conn = connect()
     if not conn:

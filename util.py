@@ -179,7 +179,7 @@ async def renameChannelRateLimit(channel: discord.VoiceChannel, newName: str):
     
 def countContextImages() -> int:
     folder = Path("resources/training/context_imgs")
-    image_extensions = {".png", ".jpg", ".jpeg"}
+    image_extensions = {".png"}
 
     file_count = len([f for f in folder.iterdir() if f.is_file() and f.suffix.lower() in image_extensions])
     return file_count
