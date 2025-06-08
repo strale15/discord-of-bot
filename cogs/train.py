@@ -12,6 +12,7 @@ from classes import trainingdb as db
 class TrainCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.started_example = []
         
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
@@ -38,9 +39,9 @@ PPV caption
 
 PPV followup
 """
-            await message.channel.send(ppv_hw_instruction, file=discord.File(f"resources/training/context_imgs/{img_id}.png"))
-            
             db.start_hw(img_id, trainee_id)
+            await message.channel.send(ppv_hw_instruction, file=discord.File(f"resources/training/context_imgs/{img_id}.png"))
+            return
             
         #END hw
         first_line = message.content.splitlines()[0].lower()
@@ -50,6 +51,10 @@ PPV followup
             trainee_id = message.author.id
             
             lines = message.content.splitlines()
+            if len(lines) < 2:
+                await message.channel.send(f"You are trying to submit an empty response for homework code {img_id}.")
+                return
+            
             response = "\n".join(lines[1:]).strip()
             
             if not db.is_hw_in_progress(img_id, trainee_id):
@@ -62,6 +67,39 @@ PPV followup
             #TODO: Add google sheet integration here
             
             await message.channel.send(f"Thanks for subbmitting the homework code **{img_id}**. Your response was recorded.")
+            return
+        
+        #Start HW example
+        if message.content.lower() == "start ctx_example":     
+            ppv_hw_instruction = f"""Write a PPV for this scenario (**ctx_example**), in format:
+end [code] <- You will wirte an actual homework code like ctx_001 or in this case ctx_example
+
+PPV caption <- Here you write PPV caption
+
+PPV followup <- Here you write the PPV followup
+"""
+            await message.channel.send(ppv_hw_instruction, file=discord.File(f"resources/training/context_example/ctx_example.png"))
+            
+            ppv_hw_instruction = f"""*For this example you would submit your response like:*
+end ctx_example
+
+some ppv caption
+
+some ppv followup
+"""
+            await message.channel.send(ppv_hw_instruction)
+            return
+            
+        #End HW example
+        first_line = message.content.splitlines()[0].lower()
+        if first_line == "end ctx_example":
+            lines = message.content.splitlines()
+            
+            if len(lines) < 2:
+                await message.channel.send(f"You successfully ended hw example but your ppv caption and followup are probably missing.")
+                return
+            
+            await message.channel.send(f"Thanks for subbmitting the homework code **ctx_example**. Your successfully completed ppv example.")
             return
         
     @app_commands.command(name="hw", description="Gives homework to trainees that are in the same voice call as you")
@@ -126,7 +164,7 @@ When you are ready to start an exercises send 'start [code]' for example 'start 
 
 _Note:_ These responses are timed!
 
-_If this is your first time doing the homework or you forgot how to do it you can go trough an example just send 'start hw example'._
+*If this is your first time doing the homework or you forgot how to do it you can go trough an example just send 'start ctx_example'.*
 """
         await self.send_dm(trainee, hw_msg)
             
