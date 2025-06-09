@@ -8,6 +8,7 @@ import settings
 from util import *
 import util
 from classes import trainingdb as db
+from classes import ppvSheet as ppvsheet
 
 class TrainCog(commands.Cog):
     def __init__(self, bot):
@@ -29,7 +30,7 @@ class TrainCog(commands.Cog):
             trainee_id = message.author.id
             
             if not db.is_hw_startable(img_id, trainee_id):
-                await message.channel.send(f"This code was either not assigned to you or you have already completed it.")
+                await message.channel.send(f"This code was either not assigned to you/you have already completed it/you already started it.")
                 return
             
             ppv_hw_instruction = f"""Write a PPV for this scenario (**{img_id}**), in format:
@@ -40,7 +41,11 @@ PPV caption
 PPV followup
 """
             db.start_hw(img_id, trainee_id)
-            await message.channel.send(ppv_hw_instruction, file=discord.File(f"resources/training/context_imgs/{img_id}.png"))
+            
+            file_id = util.getCtxImgDriveId(img_id=img_id)
+            embed = discord.Embed(title="PPV scenario image:", description="*(if empty please wait for it to load...)*")
+            embed.set_image(url=f"https://drive.google.com/uc?export=view&id={file_id}")
+            await message.channel.send(ppv_hw_instruction, embed=embed)
             return
             
         #END hw
@@ -62,11 +67,19 @@ PPV followup
                 return
             
             #Submit hw
-            db.end_hw(img_id, trainee_id, response)
+            msg = await message.channel.send(f"_Submitting, please wait..._")
+            start_time, img_id, trainee_id, completion_time, response = db.end_hw(img_id, trainee_id, response)
             
-            #TODO: Add google sheet integration here
+            completion_time_minutes = int(completion_time // 60)
+            completion_time_seconds = round(completion_time % 60)
+            completion_time_str = f"{completion_time_minutes}m {completion_time_seconds}s"
             
-            await message.channel.send(f"Thanks for subbmitting the homework code **{img_id}**. Your response was recorded.")
+            discord_display_name = message.author.display_name
+            date = start_time.strftime("%Y-%m-%d %H:%M")
+            
+            ppvsheet.submit_hw_to_sheet(date, img_id, discord_display_name, completion_time_str, response)
+            
+            await msg.edit(content=f"Thanks for submitting the homework code **{img_id}**. Your response was recorded.")
             return
         
         #Start HW example
@@ -99,7 +112,7 @@ some ppv followup
                 await message.channel.send(f"You successfully ended hw example but your ppv caption and followup are probably missing.")
                 return
             
-            await message.channel.send(f"Thanks for subbmitting the homework code **ctx_example**. Your successfully completed ppv example.")
+            await message.channel.send(f"Thanks for submitting the homework code **ctx_example**. Your successfully completed ppv example.")
             return
         
     @app_commands.command(name="hw", description="Gives homework to trainees that are in the same voice call as you")
@@ -157,6 +170,7 @@ some ppv followup
         
         if len(img_codes) == 0:
             await self.send_dm(trainee, "Congrats, you have completed all available ppv homeworks for now!")
+            return
             
         codes_str = ", ".join(img_codes)
         hw_msg = f"""Homework with the following codes was generated for you: **{codes_str}**.

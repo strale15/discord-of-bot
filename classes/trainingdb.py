@@ -88,7 +88,7 @@ def is_hw_startable(img_id: str, trainee_id: str) -> bool:
         cursor = conn.cursor()
         query = """
         SELECT 1 FROM hw_schedule
-        WHERE trainee_id = %s AND img_id = %s AND completed = 0
+        WHERE trainee_id = %s AND img_id = %s AND completed = 0 AND start_time IS NULL
         LIMIT 1
         """
         cursor.execute(query, (trainee_id, img_id))
@@ -121,18 +121,12 @@ def end_hw(img_id: str, trainee_id: str, response: str) -> bool:
         cursor.execute(select_query, (img_id, trainee_id))
         row = cursor.fetchone()
 
-        if not row or not row['start_time']:
-            # No matching row or start_time is NULL, can't compute completion time
-            return False
-
         start_time = row['start_time'].replace(tzinfo=timezone.utc)
         end_time = datetime.now(timezone.utc)
         completion_time = (end_time - start_time).total_seconds()
 
-        # Calculate completion_time in seconds (float)
         completion_time = (end_time - start_time).total_seconds()
 
-        # 2. Update end_time, completed flag and completion_time
         update_query = """
         UPDATE hw_schedule
         SET end_time = %s,
@@ -144,7 +138,7 @@ def end_hw(img_id: str, trainee_id: str, response: str) -> bool:
         cursor.execute(update_query, (end_time, completion_time, response, img_id, trainee_id))
         conn.commit()
 
-        return cursor.rowcount > 0
+        return start_time, img_id, trainee_id, completion_time, response
 
     except Error as e:
         log.warning(f"Error submitting hw: {e}")

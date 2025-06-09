@@ -4,8 +4,10 @@ import discord
 import settings
 import asyncio
 from pathlib import Path
+import json
 
 log = settings.logging.getLogger()
+img_id_drive_id_dict_path="resources/training/ctx_imgs_drive_ids.json"
 
 def getUserClockInChannel(user: discord.Member) -> discord.VoiceChannel:
     guild = user.guild
@@ -178,8 +180,17 @@ async def renameChannelRateLimit(channel: discord.VoiceChannel, newName: str):
         return False, 10.0
     
 def countContextImages() -> int:
-    folder = Path("resources/training/context_imgs")
-    image_extensions = {".png"}
+    try:
+        with open(img_id_drive_id_dict_path, "r") as f:
+            mapping = json.load(f)
+        return len(mapping)
+    except (FileNotFoundError, json.JSONDecodeError):
+        return 0
 
-    file_count = len([f for f in folder.iterdir() if f.is_file() and f.suffix.lower() in image_extensions])
-    return file_count
+def getCtxImgDriveId(img_id):
+    try:
+        with open(img_id_drive_id_dict_path, "r") as f:
+            mapping = json.load(f)
+        return mapping.get(f"{img_id}.png")
+    except (FileNotFoundError, json.JSONDecodeError):
+        return None
