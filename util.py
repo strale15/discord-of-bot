@@ -194,3 +194,14 @@ def getCtxImgDriveId(img_id):
         return mapping.get(f"{img_id}.png")
     except (FileNotFoundError, json.JSONDecodeError):
         return None
+    
+async def get_train_guild_display_name_from_user_id(bot, user_id: int) -> str:
+    guild = bot.get_guild(settings.TRAIN_GUILD_ID_INT)
+    if not guild:
+        guild = await bot.fetch_guild(settings.TRAIN_GUILD_ID_INT)
+    try:
+        member = guild.get_member(user_id) or await guild.fetch_member(user_id)
+        return member.display_name
+    except Exception as e:
+        log.error(e)
+        return "Unknown User"

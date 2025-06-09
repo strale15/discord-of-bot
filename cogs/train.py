@@ -74,7 +74,7 @@ PPV followup
             completion_time_seconds = round(completion_time % 60)
             completion_time_str = f"{completion_time_minutes}m {completion_time_seconds}s"
             
-            discord_display_name = message.author.display_name
+            discord_display_name = await util.get_train_guild_display_name_from_user_id(self.bot, trainee_id)
             date = start_time.strftime("%Y-%m-%d %H:%M")
             
             ppvsheet.submit_hw_to_sheet(date, img_id, discord_display_name, completion_time_str, response)
