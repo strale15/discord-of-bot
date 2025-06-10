@@ -181,7 +181,8 @@ self rate 5
             for trainee in trainees:
                 await self.generate_ppv_hw_for_trainee(trainee)
             
-        await interaction.followup.send("Successfully generated PPV homework for all trainees.")
+        message = await interaction.followup.send("Successfully generated PPV homework for all trainees.")
+        asyncio.create_task(delete_message_after_delay(message, settings.DELETE_AFTER))
     
     async def generate_ppv_hw_for_trainee(self, trainee: discord.Member):
         img_codes = []

@@ -33,7 +33,7 @@ FINES_REFERRALS_SHEET_ID = os.getenv("FINES_REFERRALS_SHEET_ID")
 DRIVE_FOLDER_ID = os.getenv("DRIVE_FOLDER_ID")
 TRAIN_FORM_SHEET_ID = os.getenv("TRAIN_FORM_SHEET_ID")
 
-PPV_TRAIN_SHEET = os.getenv("PPV_TRAIN_SHEET")
+TRAIN_HW_SHEET = os.getenv("TRAIN_HW_SHEET")
 
 ############################################################################
 #                            XIC Main INFO

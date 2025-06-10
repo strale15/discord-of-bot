@@ -65,7 +65,7 @@ def submit_next_mm(hw_id: str, trainee_id: str, mm_msg: str) -> int:
 
         # Check existing MMs
         select_query = """
-        SELECT mm1, mm2, mm3, mm4, mm5 FROM mm_train
+        SELECT mm1, mm2, mm3, mm4, mm5, schedule_date FROM mm_train
         WHERE hw_id = %s AND trainee_id = %s
         LIMIT 1
         """
@@ -74,33 +74,25 @@ def submit_next_mm(hw_id: str, trainee_id: str, mm_msg: str) -> int:
 
         if not row:  # No matching record found
             return 0
+        
+        schedule_date = row['schedule_date'].replace(tzinfo=timezone.utc)
+        
+        mms = [mm for mm in [row['mm1'], row['mm2'], row['mm3'], row['mm4'], row['mm5']] if mm is not None]
 
-        # Find first NULL mm field
-        mmToSubmitNum = 0
-        if row['mm1'] is None:
-            mmToSubmitNum = 1
-        elif row['mm2'] is None:
-            mmToSubmitNum = 2
-        elif row['mm3'] is None:
-            mmToSubmitNum = 3
-        elif row['mm4'] is None:
-            mmToSubmitNum = 4
-        elif row['mm5'] is None:
-            mmToSubmitNum = 5
-
-        if mmToSubmitNum == 0:  # All fields are filled
-            return 0
+        if len(mms) == 5:  # All fields are filled
+            return None, schedule_date
         
         # Fixed UPDATE query - removed trailing comma
         update_query = f"""
         UPDATE mm_train
-        SET mm{mmToSubmitNum} = %s
+        SET mm{len(mms)+1} = %s
         WHERE hw_id = %s AND trainee_id = %s
         """
         cursor.execute(update_query, (mm_msg, hw_id, trainee_id))
         conn.commit()
 
-        return mmToSubmitNum
+        mms.append(mm_msg)
+        return mms, schedule_date
 
     except Error as e:
         log.warning(f"Error submitting MM: {e}")

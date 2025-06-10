@@ -6,6 +6,7 @@ import re
 import settings
 import util
 from classes import mm_train_db as mmdb
+from classes import mmSheet as mmsheet
 from util import *
 
 class MMTrainCog(commands.Cog):
@@ -37,17 +38,22 @@ class MMTrainCog(commands.Cog):
                 return
             
             mm_msg = "\n".join(lines[1:]).strip()
-            mm_submit_num = mmdb.submit_next_mm(hw_id, trainee_id, mm_msg)
+            mms, schedule_date = mmdb.submit_next_mm(hw_id, trainee_id, mm_msg)
             
-            if mm_submit_num == 0:
+            if mms is None:
                 await message.channel.send(f"You have already completed homework id **{hw_id}**.")
                 return
             
-            mms_left = 5 - mm_submit_num
+            mms_left = 5 - len(mms)
             
             if mms_left == 0:
-                await message.channel.send(f"Thanks for submitting final mm for homework id **{hw_id}**, nice work!")
-                #TODO: Sheet integration with mm
+                msg = await message.channel.send("*Processing, please wait...*")
+
+                discord_display_name = await util.get_train_guild_display_name_from_user_id(self.bot, trainee_id)
+                date = schedule_date.strftime("%Y-%m-%d %H:%M")
+                mmsheet.submit_hw_to_sheet(date, discord_display_name, mms)
+                
+                await msg.edit(content=f"Thanks for submitting final mm for homework id **{hw_id}**, nice work!")
             else:
                 await message.channel.send(f"Thanks for submitting mm for homework id **{hw_id}**, {mms_left} *more mms left.*")
             return
@@ -67,7 +73,8 @@ class MMTrainCog(commands.Cog):
             for trainee in trainees:
                 await self.generate_mm_hw_for_trainee(trainee)
             
-        await interaction.followup.send("Successfully generated MM homework for all trainees.")
+        message = await interaction.followup.send("Successfully generated MM homework for all trainees.")
+        asyncio.create_task(delete_message_after_delay(message, settings.DELETE_AFTER))
         
     async def generate_mm_hw_for_trainee(self, trainee: discord.Member):
         hw_id = mmdb.insert_mm_train(trainee.id)

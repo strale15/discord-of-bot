@@ -18,46 +18,30 @@ client = gspread.authorize(key)
 
 workbook = client.open_by_key(settings.TRAIN_HW_SHEET)
 
-ppvSheet = workbook.get_worksheet(0)
+mmSheet = workbook.get_worksheet(1)
 
-def submit_hw_to_sheet(start_time, img_id, discord_display_name, completion_time_str, response, self_rate):
-    # Find the first empty row where the first column is empty
-    sheet_data = ppvSheet.col_values(1)
+def submit_hw_to_sheet(date: str, discord_display_name: str, mms: list[str]):
+    sheet_data = mmSheet.col_values(1)
     empty_row = len(sheet_data) + 1
     for i, cell in enumerate(sheet_data, start=1):
         if cell.strip() == "":
             empty_row = i
             break
-
-    # Prepare row data
-    drive_img_id = util.getCtxImgDriveId(img_id=img_id)
-    sheet_img_embed = f"""=HYPERLINK("https://drive.google.com/uc?export=view&id={drive_img_id}", "🔍 {img_id}")"""
     
     row_data = [
-        start_time,              # Column A
-        sheet_img_embed,         # Column B
-        discord_display_name,    # Column C
-        completion_time_str,     # Column D
-        response,                # Column E
-        self_rate                # Column F
+        date,
+        discord_display_name,
+        mms[0],
+        mms[1],
+        mms[2],
+        mms[3],
+        mms[4],
     ]
 
-    ppvSheet.insert_row([""] * len(row_data), index=empty_row)
-
-    ppvSheet.update_cell(empty_row, 1, row_data[0])
-    ppvSheet.update_cell(empty_row, 2, row_data[1])
-    ppvSheet.update_cell(empty_row, 3, row_data[2])
-    ppvSheet.update_cell(empty_row, 4, row_data[3])
-    ppvSheet.update_cell(empty_row, 5, row_data[4])
-    ppvSheet.update_cell(empty_row, 6, row_data[5])
-    add_grade_dropdown_with_colors(ppvSheet, empty_row)
+    mmSheet.insert_row(row_data, index=empty_row)
+    add_grade_dropdown_with_colors(mmSheet, empty_row)
     
 def add_grade_dropdown_with_colors(sheet, row_index):
-    """
-    Adds a dropdown to column G (index 6) of the specified row with values 1-10,
-    applies conditional formatting based on the grade,
-    and sets font size to 20 with centered alignment.
-    """
     sheet_id = sheet._properties['sheetId']
     grade_options = [str(i) for i in range(1, 11)]
     
@@ -84,8 +68,8 @@ def add_grade_dropdown_with_colors(sheet, row_index):
                 "sheetId": sheet_id,
                 "startRowIndex": row_index - 1,
                 "endRowIndex": row_index,
-                "startColumnIndex": 6,
-                "endColumnIndex": 7
+                "startColumnIndex": 7,
+                "endColumnIndex": 8
             },
             "rule": {
                 "condition": {
@@ -107,8 +91,8 @@ def add_grade_dropdown_with_colors(sheet, row_index):
                         "sheetId": sheet_id,
                         "startRowIndex": row_index - 1,
                         "endRowIndex": row_index,
-                        "startColumnIndex": 6,
-                        "endColumnIndex": 7
+                        "startColumnIndex": 7,
+                        "endColumnIndex": 8
                     }],
                     "booleanRule": {
                         "condition": {
@@ -133,14 +117,10 @@ def add_grade_dropdown_with_colors(sheet, row_index):
         horizontalAlignment='CENTER',
         verticalAlignment='MIDDLE'
     )
-    format_cell_range(sheet, f"G{row_index}", fmt)
+    format_cell_range(sheet, f"H{row_index}", fmt)
     
-    fmt = CellFormat(
-        textFormat=TextFormat(fontSize=15),
-        horizontalAlignment='CENTER',
-        verticalAlignment='MIDDLE'
-    )
-    format_cell_range(sheet, f"F{row_index}", fmt)
+    fmt = CellFormat(verticalAlignment='TOP')
+    format_cell_range(sheet, f"C{row_index}:G{row_index}", fmt)
     
     # Add dashed border to the whole row (A-G)
     fmt = CellFormat(
@@ -151,4 +131,4 @@ def add_grade_dropdown_with_colors(sheet, row_index):
             right=Border(style='DASHED', color=Color(0.2, 0.2, 0.2)),
         )
     )
-    format_cell_range(sheet, f"A{row_index}:H{row_index}", fmt)
+    format_cell_range(sheet, f"A{row_index}:I{row_index}", fmt)
