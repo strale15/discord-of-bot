@@ -33,6 +33,7 @@ CREATE TABLE IF NOT EXISTS `hw_schedule` (
   `start_time` timestamp NULL DEFAULT NULL,
   `end_time` timestamp NULL DEFAULT NULL,
   `completion_time` double DEFAULT NULL,
+  `self_rate` int DEFAULT 0,
   `response` TEXT DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;

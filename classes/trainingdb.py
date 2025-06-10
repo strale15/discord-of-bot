@@ -104,7 +104,7 @@ def is_hw_startable(img_id: str, trainee_id: str) -> bool:
         cursor.close()
         conn.close()
         
-def end_hw(img_id: str, trainee_id: str, response: str) -> bool:
+def end_hw(img_id: str, trainee_id: str, response: str, self_rate: int) -> bool:
     conn = connect()
     if not conn:
         return False
@@ -132,10 +132,11 @@ def end_hw(img_id: str, trainee_id: str, response: str) -> bool:
         SET end_time = %s,
             completed = 1,
             completion_time = %s,
+            self_rate = %s,
             response = %s
         WHERE img_id = %s AND trainee_id = %s AND completed = 0
         """
-        cursor.execute(update_query, (end_time, completion_time, response, img_id, trainee_id))
+        cursor.execute(update_query, (end_time, completion_time, self_rate, response, img_id, trainee_id))
         conn.commit()
 
         return start_time, img_id, trainee_id, completion_time, response
@@ -188,6 +189,58 @@ def get_img_ids_for_trainee(trainee_id: str) -> list[str]:
         query = """
         SELECT img_id FROM hw_schedule
         WHERE trainee_id = %s
+        """
+        cursor.execute(query, (trainee_id,))
+        results = cursor.fetchall()
+
+        # Extract img_id from each row
+        img_ids = [row[0] for row in results]
+        return img_ids
+
+    except Error as e:
+        log.warning(f"Error fetching img_ids: {e}")
+        return []
+
+    finally:
+        cursor.close()
+        conn.close()
+        
+def get_not_started_hw_for_trainee_id(trainee_id: str) -> list[str]:
+    conn = connect()
+    if not conn:
+        return []
+
+    try:
+        cursor = conn.cursor()
+        query = """
+        SELECT img_id FROM hw_schedule
+        WHERE trainee_id = %s AND completed = 0 AND start_time IS NULL
+        """
+        cursor.execute(query, (trainee_id,))
+        results = cursor.fetchall()
+
+        # Extract img_id from each row
+        img_ids = [row[0] for row in results]
+        return img_ids
+
+    except Error as e:
+        log.warning(f"Error fetching img_ids: {e}")
+        return []
+
+    finally:
+        cursor.close()
+        conn.close()
+        
+def get_started_hw_for_trainee_id(trainee_id: str) -> list[str]:
+    conn = connect()
+    if not conn:
+        return []
+
+    try:
+        cursor = conn.cursor()
+        query = """
+        SELECT img_id FROM hw_schedule
+        WHERE trainee_id = %s AND completed = 0 AND start_time IS NOT NULL
         """
         cursor.execute(query, (trainee_id,))
         results = cursor.fetchall()

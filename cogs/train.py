@@ -39,6 +39,8 @@ end [code]
 PPV caption
 
 PPV followup
+
+self rate 1-10
 """
             db.start_hw(img_id, trainee_id)
             
@@ -49,18 +51,30 @@ PPV followup
             return
             
         #END hw
-        first_line = message.content.splitlines()[0].lower()
-        match = re.match(r"^end\s+(ctx_[0-9]{3})$", first_line)
-        if match:
-            img_id = match.group(1)
+        lines = message.content.splitlines()
+        first_line = lines[0].lower()
+        last_line = lines[-1].lower()
+        
+        match_first = re.match(r"^end\s+(ctx_[0-9]{3})$", first_line)
+        match_last = re.match(r"^self rate ([0-9]{1,2})$", last_line)
+        if match_first:
+            if not match_last:
+                await message.channel.send(f"Please provide a self rate from 1-10 at the end, for example _self rate 6_")
+                return
+            
+            self_rate = match_last.group(1)
+            if int(self_rate) < 1 or int(self_rate) > 10:
+                await message.channel.send(f"Please keep the self rate in range 1-10.")
+                return
+            
+            img_id = match_first.group(1)
             trainee_id = message.author.id
             
-            lines = message.content.splitlines()
-            if len(lines) < 2:
+            if len(lines) < 3:
                 await message.channel.send(f"You are trying to submit an empty response for homework code {img_id}.")
                 return
             
-            response = "\n".join(lines[1:]).strip()
+            response = "\n".join(lines[1:-1]).strip()
             
             if not db.is_hw_in_progress(img_id, trainee_id):
                 await message.channel.send(f"You either completed this homework or have not started it yet. Send me 'start [code]' if you want to start it.")
@@ -68,7 +82,7 @@ PPV followup
             
             #Submit hw
             msg = await message.channel.send(f"_Submitting, please wait..._")
-            start_time, img_id, trainee_id, completion_time, response = db.end_hw(img_id, trainee_id, response)
+            start_time, img_id, trainee_id, completion_time, response = db.end_hw(img_id, trainee_id, response, int(self_rate))
             
             completion_time_minutes = int(completion_time // 60)
             completion_time_seconds = round(completion_time % 60)
@@ -77,7 +91,7 @@ PPV followup
             discord_display_name = await util.get_train_guild_display_name_from_user_id(self.bot, trainee_id)
             date = start_time.strftime("%Y-%m-%d %H:%M")
             
-            ppvsheet.submit_hw_to_sheet(date, img_id, discord_display_name, completion_time_str, response)
+            ppvsheet.submit_hw_to_sheet(date, img_id, discord_display_name, completion_time_str, response, self_rate)
             
             await msg.edit(content=f"Thanks for submitting the homework code **{img_id}**. Your response was recorded.")
             return
@@ -90,15 +104,24 @@ end [code] <- You will wirte an actual homework code like ctx_001 or in this cas
 PPV caption <- Here you write PPV caption
 
 PPV followup <- Here you write the PPV followup
+
+self rate 1-10 <- Here you provide a rate for you ppv from 1-10
 """
-            await message.channel.send(ppv_hw_instruction, file=discord.File(f"resources/training/context_example/ctx_example.png"))
+            file = discord.File("resources/training/context_example/ctx_example.png", filename="ctx_example.png")
+            embed = discord.Embed(title="PPV scenario image:")
+            embed.set_image(url="attachment://ctx_example.png")
+            await message.channel.send(ppv_hw_instruction, embed=embed, file=file)
             
-            ppv_hw_instruction = f"""*For this example you would submit your response like:*
+            ppv_hw_instruction = f"""
+*For the example above^ you would submit your response like:*
+
 end ctx_example
 
 some ppv caption
 
 some ppv followup
+
+self rate 5
 """
             await message.channel.send(ppv_hw_instruction)
             return
@@ -113,6 +136,26 @@ some ppv followup
                 return
             
             await message.channel.send(f"Thanks for submitting the homework code **ctx_example**. Your successfully completed ppv example.")
+            return
+        
+        #Show unfinished hw
+        if message.content.lower() == "hw?":
+            trainee_id = message.author.id
+            img_codes = db.get_not_started_hw_for_trainee_id(trainee_id)  
+            
+            msg = ""
+            if img_codes is None or len(img_codes) == 0:
+                msg = f"You currently do not have any PPV homeworks assigned to you."
+            else:
+                codes_str = ", ".join(img_codes)
+                msg = f"Following homework codes are assigned to you and incomplete: **{codes_str}**"
+            
+            img_codes_started = db.get_started_hw_for_trainee_id(trainee_id)
+            if img_codes_started is not None and len(img_codes_started) > 0:
+                codes_str_started = ", ".join(img_codes_started)
+                msg += f"\nYou also started but never ended the following homework codes: **{codes_str_started}**"
+            
+            await message.channel.send(msg)
             return
         
     @app_commands.command(name="hw", description="Gives homework to trainees that are in the same voice call as you")
