@@ -31,7 +31,7 @@ def start_hw(img_id: str, trainee_id: str) -> bool:
     try:
         cursor = conn.cursor()
         query = """
-        UPDATE hw_schedule
+        UPDATE ppv_train
         SET start_time = %s
         WHERE img_id = %s AND trainee_id = %s
         """
@@ -58,7 +58,7 @@ def is_hw_in_progress(img_id: str, trainee_id: str) -> bool:
     try:
         cursor = conn.cursor()
         query = """
-        SELECT 1 FROM hw_schedule
+        SELECT 1 FROM ppv_train
         WHERE img_id = %s
           AND trainee_id = %s
           AND start_time IS NOT NULL
@@ -87,7 +87,7 @@ def is_hw_startable(img_id: str, trainee_id: str) -> bool:
     try:
         cursor = conn.cursor()
         query = """
-        SELECT 1 FROM hw_schedule
+        SELECT 1 FROM ppv_train
         WHERE trainee_id = %s AND img_id = %s AND completed = 0 AND start_time IS NULL
         LIMIT 1
         """
@@ -97,7 +97,7 @@ def is_hw_startable(img_id: str, trainee_id: str) -> bool:
         return result is not None  # True if a matching row exists
 
     except Error as e:
-        log.warning(f"Error checking hw_schedule: {e}")
+        log.warning(f"Error checking ppv_train: {e}")
         return False
 
     finally:
@@ -114,7 +114,7 @@ def end_hw(img_id: str, trainee_id: str, response: str, self_rate: int) -> bool:
 
         # 1. Fetch current start_time for the given img_id and trainee_id
         select_query = """
-        SELECT start_time FROM hw_schedule
+        SELECT start_time FROM ppv_train
         WHERE img_id = %s AND trainee_id = %s AND completed = 0
         LIMIT 1
         """
@@ -128,7 +128,7 @@ def end_hw(img_id: str, trainee_id: str, response: str, self_rate: int) -> bool:
         completion_time = (end_time - start_time).total_seconds()
 
         update_query = """
-        UPDATE hw_schedule
+        UPDATE ppv_train
         SET end_time = %s,
             completed = 1,
             completion_time = %s,
@@ -149,7 +149,7 @@ def end_hw(img_id: str, trainee_id: str, response: str, self_rate: int) -> bool:
         cursor.close()
         conn.close()
     
-def insert_hw_schedule(img_id: str, trainee_id: str):
+def insert_ppv_train(img_id: str, trainee_id: str):
     conn = connect()
     if not conn:
         return None
@@ -160,7 +160,7 @@ def insert_hw_schedule(img_id: str, trainee_id: str):
         hw_id = str(uuid.uuid4())
 
         query = """
-        INSERT INTO hw_schedule (id, img_id, trainee_id)
+        INSERT INTO ppv_train (id, img_id, trainee_id)
         VALUES (%s, %s, %s)
         """
 
@@ -172,7 +172,7 @@ def insert_hw_schedule(img_id: str, trainee_id: str):
         return hw_id
 
     except Error as e:
-        log.warning(f"Error inserting into hw_schedule: {e}")
+        log.warning(f"Error inserting into ppv_train: {e}")
         return None
 
     finally:
@@ -187,7 +187,7 @@ def get_img_ids_for_trainee(trainee_id: str) -> list[str]:
     try:
         cursor = conn.cursor()
         query = """
-        SELECT img_id FROM hw_schedule
+        SELECT img_id FROM ppv_train
         WHERE trainee_id = %s
         """
         cursor.execute(query, (trainee_id,))
@@ -213,7 +213,7 @@ def get_not_started_hw_for_trainee_id(trainee_id: str) -> list[str]:
     try:
         cursor = conn.cursor()
         query = """
-        SELECT img_id FROM hw_schedule
+        SELECT img_id FROM ppv_train
         WHERE trainee_id = %s AND completed = 0 AND start_time IS NULL
         """
         cursor.execute(query, (trainee_id,))
@@ -239,7 +239,7 @@ def get_started_hw_for_trainee_id(trainee_id: str) -> list[str]:
     try:
         cursor = conn.cursor()
         query = """
-        SELECT img_id FROM hw_schedule
+        SELECT img_id FROM ppv_train
         WHERE trainee_id = %s AND completed = 0 AND start_time IS NOT NULL
         """
         cursor.execute(query, (trainee_id,))

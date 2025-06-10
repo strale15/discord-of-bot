@@ -205,3 +205,32 @@ async def get_train_guild_display_name_from_user_id(bot, user_id: int) -> str:
     except Exception as e:
         log.error(e)
         return "Unknown User"
+    
+async def extract_trainees_from_voice(interaction: discord.Interaction) -> list[discord.Member]:
+        user_voice = interaction.user.voice
+
+        if not user_voice or not user_voice.channel:
+            await interaction.followup.send("You're not in a voice channel.")
+            return
+
+        voice_channel = user_voice.channel
+        
+        trainee_role = interaction.guild.get_role(settings.TRAINEE_ROLE_ID)
+        chatter_role = interaction.guild.get_role(settings.CHATTER_ROLE_ID)
+        
+        trainees = [
+            member for member in voice_channel.members
+            if trainee_role in member.roles and chatter_role not in member.roles
+        ]
+        
+        if len(trainees) == 0:
+            await interaction.followup.send("No trainees in your voice channel.")
+            return
+        
+        return trainees
+    
+async def send_dm(member: discord.Member, msg):
+        try:
+            await member.send(msg)
+        except discord.Forbidden:
+            log.info(f"Could not send a DM to {member.name}")

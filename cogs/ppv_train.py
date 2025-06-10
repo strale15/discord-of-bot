@@ -7,7 +7,8 @@ import re
 import settings
 from util import *
 import util
-from classes import trainingdb as db
+from classes import ppv_train_db as db
+from classes import mm_train_db as mmdb
 from classes import ppvSheet as ppvsheet
 
 class TrainCog(commands.Cog):
@@ -24,7 +25,7 @@ class TrainCog(commands.Cog):
             return
             
         #START hw
-        match = re.match(r"^start\s+(ctx_[0-9]{3})$", message.content.lower())
+        match = re.match(r"^start\s+(ctx_[0-9]{3})\s*$", message.content.lower())
         if match:
             img_id = match.group(1)
             trainee_id = message.author.id
@@ -55,8 +56,8 @@ self rate 1-10
         first_line = lines[0].lower()
         last_line = lines[-1].lower()
         
-        match_first = re.match(r"^end\s+(ctx_[0-9]{3})$", first_line)
-        match_last = re.match(r"^self rate ([0-9]{1,2})$", last_line)
+        match_first = re.match(r"^end\s+(ctx_[0-9]{3})\s*$", first_line)
+        match_last = re.match(r"^self rate ([0-9]{1,2})\s*$", last_line)
         if match_first:
             if not match_last:
                 await message.channel.send(f"Please provide a self rate from 1-10 at the end, for example _self rate 6_")
@@ -97,7 +98,7 @@ self rate 1-10
             return
         
         #Start HW example
-        if message.content.lower() == "start ctx_example":     
+        if message.content.lower().strip() == "start ctx_example":     
             ppv_hw_instruction = f"""Write a PPV for this scenario (**ctx_example**), in format:
 end [code] <- You will wirte an actual homework code like ctx_001 or in this case ctx_example
 
@@ -148,18 +149,25 @@ self rate 5
                 msg = f"You currently do not have any PPV homeworks assigned to you."
             else:
                 codes_str = ", ".join(img_codes)
-                msg = f"Following homework codes are assigned to you and incomplete: **{codes_str}**"
+                msg = f"Following PPV homework codes are assigned to you and incomplete: **{codes_str}**"
             
             img_codes_started = db.get_started_hw_for_trainee_id(trainee_id)
             if img_codes_started is not None and len(img_codes_started) > 0:
                 codes_str_started = ", ".join(img_codes_started)
-                msg += f"\nYou also started but never ended the following homework codes: **{codes_str_started}**"
+                msg += f"\nYou also started but never ended the following PPV homework codes: **{codes_str_started}**, please do."
+                
+            left_mms_tuple = mmdb.get_left_mm_for_trainee_id(trainee_id)
+            if left_mms_tuple is not None and len(left_mms_tuple) > 0:
+                for hw_id, mms_left in left_mms_tuple:
+                    msg += f"\nYou haven't completed MM homework with id **{hw_id}** (*{mms_left} mms left to submit*)"
+            else:
+                msg += f"\nYou currently do not have any MM homeworks assigned to you."
             
             await message.channel.send(msg)
             return
         
-    @app_commands.command(name="hw", description="Gives homework to trainees that are in the same voice call as you")
-    async def giveHomework(self, interaction: discord.Interaction):
+    @app_commands.command(name="hw-ppv", description="Gives homework to trainees that are in the same voice call as you")
+    async def givePpvHomework(self, interaction: discord.Interaction):
         await interaction.response.defer(ephemeral=True)
         
         trainer_role = interaction.guild.get_role(settings.TRAINER_ROLE_ID)
@@ -167,38 +175,15 @@ self rate 5
             await interaction.followup.send("You do not have a _Trainer_ role.")
             return
         
-        trainees = await self.extract_trainees_from_voice(interaction)
+        trainees = await util.extract_trainees_from_voice(interaction)
         
         if trainees is not None and len(trainees) > 0:
             for trainee in trainees:
-                await self.generate_hw_for_trainee(interaction, trainee)
+                await self.generate_ppv_hw_for_trainee(trainee)
             
-        await interaction.followup.send("Successfully generated homework for all trainees.")
-        
-    async def extract_trainees_from_voice(self, interaction: discord.Interaction) -> list[discord.Member]:
-        user_voice = interaction.user.voice
-
-        if not user_voice or not user_voice.channel:
-            await interaction.followup.send("You're not in a voice channel.")
-            return
-
-        voice_channel = user_voice.channel
-        
-        trainee_role = interaction.guild.get_role(settings.TRAINEE_ROLE_ID)
-        chatter_role = interaction.guild.get_role(settings.CHATTER_ROLE_ID)
-        
-        trainees = [
-            member for member in voice_channel.members
-            if trainee_role in member.roles and chatter_role not in member.roles
-        ]
-        
-        if len(trainees) == 0:
-            await interaction.followup.send("No trainees in your voice channel.")
-            return
-        
-        return trainees
+        await interaction.followup.send("Successfully generated PPV homework for all trainees.")
     
-    async def generate_hw_for_trainee(self, interaction: discord.Interaction, trainee: discord.Member):
+    async def generate_ppv_hw_for_trainee(self, trainee: discord.Member):
         img_codes = []
         existing_img_ids = db.get_img_ids_for_trainee(trainee.id)
         
@@ -209,10 +194,10 @@ self rate 5
                 break
                 
             img_codes.append(img_id)
-            db.insert_hw_schedule(img_id=img_id, trainee_id=trainee.id)
+            db.insert_ppv_train(img_id=img_id, trainee_id=trainee.id)
         
         if len(img_codes) == 0:
-            await self.send_dm(trainee, "Congrats, you have completed all available ppv homeworks for now!")
+            await util.send_dm(trainee, "Congrats, you have completed all available ppv homeworks for now!")
             return
             
         codes_str = ", ".join(img_codes)
@@ -223,7 +208,7 @@ _Note:_ These responses are timed!
 
 *If this is your first time doing the homework or you forgot how to do it you can go trough an example just send 'start ctx_example'.*
 """
-        await self.send_dm(trainee, hw_msg)
+        await util.send_dm(trainee, hw_msg)
             
     def generate_random_img_id(self, existing_img_ids):
         num_of_ctx_imgs = util.countContextImages()
@@ -235,15 +220,9 @@ _Note:_ These responses are timed!
             img_id = f"ctx_{num:03}"
             if img_id not in existing_img_ids:
                 return img_id
-            
-    async def send_dm(self, memeber: discord.Member, msg):
-        try:
-            await memeber.send(msg)
-        except discord.Forbidden:
-            log.info(f"Could not send a join DM to {memeber.name}")
         
     async def cog_load(self):
-        self.bot.tree.add_command(self.giveHomework, guild=settings.TRAIN_GUILD_ID)
+        self.bot.tree.add_command(self.givePpvHomework, guild=settings.TRAIN_GUILD_ID)
 
 async def setup(bot):
     await bot.add_cog(TrainCog(bot))

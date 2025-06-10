@@ -25,7 +25,7 @@ CREATE TABLE IF NOT EXISTS nda_signed (
   PRIMARY KEY (user_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
 
-CREATE TABLE IF NOT EXISTS `hw_schedule` (
+CREATE TABLE IF NOT EXISTS `ppv_train` (
   `id` uuid NOT NULL,
   `img_id` varchar(100) NOT NULL,
   `trainee_id` varchar(100) NOT NULL,
@@ -35,5 +35,18 @@ CREATE TABLE IF NOT EXISTS `hw_schedule` (
   `completion_time` double DEFAULT NULL,
   `self_rate` int DEFAULT 0,
   `response` TEXT DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE `mm_train` (
+  `id` uuid NOT NULL,
+  `hw_id` varchar(100) NOT NULL,
+  `trainee_id` varchar(100) NOT NULL,
+  `schedule_date` timestamp NULL DEFAULT NULL,
+  `mm1` text DEFAULT NULL,
+  `mm2` text DEFAULT NULL,
+  `mm3` text DEFAULT NULL,
+  `mm4` text DEFAULT NULL,
+  `mm5` text DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
