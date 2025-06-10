@@ -43,6 +43,7 @@ Once you're done respond with **'Send NDA'**, I will send you the NDA to sign so
             
             try:
                 await member.send(join_message)
+                log.info(f"Send XICE join dm to {member.name}")
             except discord.Forbidden:
                 log.info(f"Could not send a join DM to {member.name}")
 
