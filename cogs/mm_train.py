@@ -58,6 +58,8 @@ class MMTrainCog(commands.Cog):
                 await message.channel.send(f"Thanks for submitting mm for homework id **{hw_id}**, {mms_left} *more mms left.*")
             return
         
+    @app_commands.checks.has_permissions(manage_messages=True)
+    @app_commands.default_permissions(manage_messages=True)
     @app_commands.command(name="hw-mm", description="Gives homework to trainees that are in the same voice call as you")
     async def giveMmHomework(self, interaction: discord.Interaction):
         await interaction.response.defer(ephemeral=True)
