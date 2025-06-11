@@ -9,8 +9,10 @@ from typing import List, Dict
 
 import settings
 from util import *
-from classes import publish_hw_sheet_ppv as publishSheet
-from classes.publish_hw_sheet_ppv import HomeworkSubmission
+from classes import publish_hw_sheet_ppv as ppvSheet
+from classes import publish_hw_sheet_mm as mmSheet
+from classes.publish_hw_sheet_ppv import PPVHomeworkSubmission
+from classes.publish_hw_sheet_mm import MMHomeworkSubmission
 import util
 
 class PublishHwCog(commands.Cog):
@@ -29,24 +31,63 @@ class PublishHwCog(commands.Cog):
             await interaction.followup.send("You do not have a _Trainer_ role.")
             return
         
-        if not is_valid_date(date):
+        if not self.is_valid_date(date):
             await interaction.followup.send("Invalid date format. Use `YYYY-MM-DD` (e.g., `2025-06-11`).")
             return
         
-        rows = publishSheet.fetch_rows_by_date(date)
-        if not rows or len(rows) == 0:
-            await interaction.followup.send(f"No hw data found for date `{date}`.")
-            return
+        ppv_rows = ppvSheet.fetch_rows_by_date(date)
+        isPpvPresentForDate = True
+        if not ppv_rows or len(ppv_rows) == 0:
+            isPpvPresentForDate = False
+            #await interaction.followup.send(f"No ppv hw data found for date `{date}`.")
+        else:
+            ppv_trainee_messages = self.build_ppv_messages_by_trainee(ppv_rows, date)
+            
+        mma_rows = mmSheet.fetch_rows_by_date(date)
+        isMmaPresentForDate = True
+        if not mma_rows or len(mma_rows) == 0:
+            isMmaPresentForDate = False
+        else:
+            mma_trainee_messages = self.build_mma_messages_by_trainee(mma_rows, date)
 
-        grouped_rows = group_rows_by_trainee(rows)
+        all_trainee_ids = set()
+        if isPpvPresentForDate:
+            all_trainee_ids.update(ppv_trainee_messages.keys())
+        if isMmaPresentForDate:
+            all_trainee_ids.update(mma_trainee_messages.keys())
 
-        for trainee_id, trainee_rows in grouped_rows.items():
+        for trainee_id in all_trainee_ids:
+            full_msg = f"## 📝 Here are your homework results for `{date}`:\n\n"
+
+            if isPpvPresentForDate and trainee_id in ppv_trainee_messages:
+                full_msg += ppv_trainee_messages[trainee_id] + "\n\n"
+
+            if isMmaPresentForDate and trainee_id in mma_trainee_messages:
+                full_msg += mma_trainee_messages[trainee_id] + "\n\n"
+
             try:
                 member = await interaction.guild.fetch_member(int(trainee_id))
-            except:
+                await util.send_dm(member, full_msg)
+            except Exception as e:
                 continue
             
-            member_msg = f"## 📝 Here are your homework results for `{date}`:\n\n"
+        msg = "Homework published!"
+        
+        if not isPpvPresentForDate:
+            msg += " No PPV data for provided date."
+        if not isMmaPresentForDate:
+            msg += " No MM data for provided date."
+            
+        await interaction.followup.send(msg)
+        
+    def build_ppv_messages_by_trainee(self, ppv_rows, date: str) -> dict[str, str]:
+        messages = defaultdict(str)
+
+        grouped_rows = self.group_ppv_rows_by_trainee(ppv_rows)
+
+        for trainee_id, trainee_rows in grouped_rows.items():
+            member_msg = ""
+
             for submission in trainee_rows:
                 notes = submission.notes.strip() if submission.notes.strip() else "/"
                 response = submission.response.strip() if submission.response.strip() else "/"
@@ -62,9 +103,59 @@ class PublishHwCog(commands.Cog):
 
                 member_msg += result_block
             
-            await util.send_dm(member, member_msg)
+            messages[trainee_id] = member_msg
 
-        await interaction.followup.send("Homework published!")
+        return messages
+    
+    def build_mma_messages_by_trainee(self, mma_rows, date: str) -> dict[str, str]:
+        messages = defaultdict(str)
+
+        grouped_rows = self.group_mma_rows_by_trainee(mma_rows)
+
+        for trainee_id, trainee_rows in grouped_rows.items():
+            member_msg = ""
+            
+            for submission in trainee_rows:
+                notes = submission.notes.strip() if submission.notes.strip() else "/"
+
+                result_block = (
+                    f"**━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━**\n"
+                    f"- Grade: `{submission.grade}`\n"
+                    f"Notes:\n```{notes}```\n"
+                    f"MM1:\n```{submission.mm1}```\n"
+                    f"MM2:\n```{submission.mm2}```\n"
+                    f"MM3:\n```{submission.mm3}```\n"
+                    f"MM4:\n```{submission.mm4}```\n"
+                    f"MM5:\n```{submission.mm5}```\n"
+                )
+
+                member_msg += result_block
+            
+            messages[trainee_id] = member_msg
+
+        return messages
+    
+    def group_ppv_rows_by_trainee(self, rows: List[PPVHomeworkSubmission]) -> Dict[str, List[PPVHomeworkSubmission]]:
+        grouped = defaultdict(list)
+        for row in rows:
+            grouped[row.trainee_id].append(row)
+        return grouped
+    
+    def group_mma_rows_by_trainee(self, rows: List[MMHomeworkSubmission]) -> Dict[str, List[MMHomeworkSubmission]]:
+        grouped = defaultdict(list)
+        for row in rows:
+            grouped[row.trainee_id].append(row)
+        return grouped
+    
+    def is_valid_date(self, date_str: str) -> bool:
+        # Strict YYYY-MM-DD format with leading zero enforcement
+        if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", date_str):
+            return False
+        try:
+            datetime.strptime(date_str, "%Y-%m-%d")
+            return True
+        except ValueError:
+            return False
         
     async def cog_load(self):
         self.bot.tree.add_command(self.publishHw, guild=settings.TRAIN_GUILD_ID)
@@ -72,18 +163,5 @@ class PublishHwCog(commands.Cog):
 async def setup(bot):
     await bot.add_cog(PublishHwCog(bot))
     
-def is_valid_date(date_str: str) -> bool:
-    # Strict YYYY-MM-DD format with leading zero enforcement
-    if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", date_str):
-        return False
-    try:
-        datetime.strptime(date_str, "%Y-%m-%d")
-        return True
-    except ValueError:
-        return False
+
     
-def group_rows_by_trainee(rows: List[HomeworkSubmission]) -> Dict[str, List[HomeworkSubmission]]:
-    grouped = defaultdict(list)
-    for row in rows:
-        grouped[row.trainee_id].append(row)
-    return grouped
