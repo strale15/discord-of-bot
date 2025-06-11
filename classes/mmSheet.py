@@ -20,7 +20,7 @@ workbook = client.open_by_key(settings.TRAIN_HW_SHEET)
 
 mmSheet = workbook.get_worksheet(1)
 
-def submit_hw_to_sheet(date: str, discord_display_name: str, mms: list[str]):
+def submit_hw_to_sheet(date: str, discord_display_name: str, trainee_id, mms: list[str]):
     sheet_data = mmSheet.col_values(1)
     empty_row = len(sheet_data) + 1
     for i, cell in enumerate(sheet_data, start=1):
@@ -39,6 +39,7 @@ def submit_hw_to_sheet(date: str, discord_display_name: str, mms: list[str]):
     ]
 
     mmSheet.insert_row(row_data, index=empty_row)
+    mmSheet.update_cell(empty_row, 10, str(trainee_id))
     add_grade_dropdown_with_colors(mmSheet, empty_row)
     
 def add_grade_dropdown_with_colors(sheet, row_index):

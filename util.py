@@ -225,7 +225,7 @@ async def extract_trainees_from_voice(interaction: discord.Interaction) -> list[
         
         if len(trainees) == 0:
             await interaction.followup.send("No trainees in your voice channel.")
-            return
+            return None
         
         return trainees
     

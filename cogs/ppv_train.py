@@ -34,8 +34,8 @@ class TrainCog(commands.Cog):
                 await message.channel.send(f"This code was either not assigned to you/you have already completed it/you already started it.")
                 return
             
-            ppv_hw_instruction = f"""Write a PPV for this scenario (**{img_id}**), in format:
-end [code]
+            ppv_hw_instruction = f"""Write a PPV for this scenario by sending ma a message in the following format format:
+end {img_id}
 
 PPV caption
 
@@ -83,16 +83,16 @@ self rate 1-10
             
             #Submit hw
             msg = await message.channel.send(f"_Submitting, please wait..._")
-            start_time, img_id, trainee_id, completion_time, response = db.end_hw(img_id, trainee_id, response, int(self_rate))
+            schedule_date, img_id, trainee_id, completion_time, response = db.end_hw(img_id, trainee_id, response, int(self_rate))
             
             completion_time_minutes = int(completion_time // 60)
             completion_time_seconds = round(completion_time % 60)
             completion_time_str = f"{completion_time_minutes}m {completion_time_seconds}s"
             
             discord_display_name = await util.get_train_guild_display_name_from_user_id(self.bot, trainee_id)
-            date = start_time.strftime("%Y-%m-%d %H:%M")
+            date = schedule_date.strftime("%Y-%m-%d %H:%M")
             
-            ppvsheet.submit_hw_to_sheet(date, img_id, discord_display_name, completion_time_str, response, self_rate)
+            ppvsheet.submit_hw_to_sheet(date, img_id, discord_display_name, trainee_id, completion_time_str, response, self_rate)
             
             await msg.edit(content=f"Thanks for submitting the homework code **{img_id}**. Your response was recorded.")
             return
@@ -180,9 +180,8 @@ self rate 5
         if trainees is not None and len(trainees) > 0:
             for trainee in trainees:
                 await self.generate_ppv_hw_for_trainee(trainee)
-            
-        message = await interaction.followup.send("Successfully generated PPV homework for all trainees.")
-        asyncio.create_task(delete_message_after_delay(message, settings.DELETE_AFTER))
+            message = await interaction.followup.send("Successfully generated PPV homework for all trainees.")
+            asyncio.create_task(delete_message_after_delay(message, settings.DELETE_AFTER))
     
     async def generate_ppv_hw_for_trainee(self, trainee: discord.Member):
         img_codes = []
@@ -203,11 +202,11 @@ self rate 5
             
         codes_str = ", ".join(img_codes)
         hw_msg = f"""Homework with the following codes was generated for you: **{codes_str}**.
-When you are ready to start an exercises send 'start [code]' for example 'start {img_codes[0]}'.
+When you are ready to start one of the homeworks send **start [code]** for example **start {img_codes[0]}**.
 
-_Note:_ These responses are timed!
+_Note:_ These responses are **timed**!
 
-*If this is your first time doing the homework or you forgot how to do it you can go trough an example just send 'start ctx_example'.*
+-# *If this is your first time doing the homework or you forgot how to do it you can go trough an example just send **start ctx_example**.*
 """
         await util.send_dm(trainee, hw_msg)
             

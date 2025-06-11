@@ -51,7 +51,7 @@ class MMTrainCog(commands.Cog):
 
                 discord_display_name = await util.get_train_guild_display_name_from_user_id(self.bot, trainee_id)
                 date = schedule_date.strftime("%Y-%m-%d %H:%M")
-                mmsheet.submit_hw_to_sheet(date, discord_display_name, mms)
+                mmsheet.submit_hw_to_sheet(date, discord_display_name, trainee_id, mms)
                 
                 await msg.edit(content=f"Thanks for submitting final mm for homework id **{hw_id}**, nice work!")
             else:
@@ -72,9 +72,8 @@ class MMTrainCog(commands.Cog):
         if trainees is not None and len(trainees) > 0:
             for trainee in trainees:
                 await self.generate_mm_hw_for_trainee(trainee)
-            
-        message = await interaction.followup.send("Successfully generated MM homework for all trainees.")
-        asyncio.create_task(delete_message_after_delay(message, settings.DELETE_AFTER))
+            message = await interaction.followup.send("Successfully generated MM homework for all trainees.")
+            asyncio.create_task(delete_message_after_delay(message, settings.DELETE_AFTER))
         
     async def generate_mm_hw_for_trainee(self, trainee: discord.Member):
         hw_id = mmdb.insert_mm_train(trainee.id)

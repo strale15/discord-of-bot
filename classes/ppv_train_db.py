@@ -114,17 +114,17 @@ def end_hw(img_id: str, trainee_id: str, response: str, self_rate: int) -> bool:
 
         # 1. Fetch current start_time for the given img_id and trainee_id
         select_query = """
-        SELECT start_time FROM ppv_train
+        SELECT start_time, schedule_date FROM ppv_train
         WHERE img_id = %s AND trainee_id = %s AND completed = 0
         LIMIT 1
         """
         cursor.execute(select_query, (img_id, trainee_id))
         row = cursor.fetchone()
 
+        schedule_date = row['schedule_date'].replace(tzinfo=timezone.utc)
         start_time = row['start_time'].replace(tzinfo=timezone.utc)
+        
         end_time = datetime.now(timezone.utc)
-        completion_time = (end_time - start_time).total_seconds()
-
         completion_time = (end_time - start_time).total_seconds()
 
         update_query = """
@@ -139,7 +139,7 @@ def end_hw(img_id: str, trainee_id: str, response: str, self_rate: int) -> bool:
         cursor.execute(update_query, (end_time, completion_time, self_rate, response, img_id, trainee_id))
         conn.commit()
 
-        return start_time, img_id, trainee_id, completion_time, response
+        return schedule_date, img_id, trainee_id, completion_time, response
 
     except Error as e:
         log.warning(f"Error submitting hw: {e}")
@@ -158,13 +158,14 @@ def insert_ppv_train(img_id: str, trainee_id: str):
         cursor = conn.cursor()
 
         hw_id = str(uuid.uuid4())
+        now = datetime.now(timezone.utc)
 
         query = """
-        INSERT INTO ppv_train (id, img_id, trainee_id)
-        VALUES (%s, %s, %s)
+        INSERT INTO ppv_train (id, img_id, trainee_id, schedule_date)
+        VALUES (%s, %s, %s, %s)
         """
-
-        values = (hw_id, img_id, trainee_id)
+        
+        values = (hw_id, img_id, trainee_id, now)
 
         cursor.execute(query, values)
         conn.commit()

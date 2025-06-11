@@ -20,7 +20,7 @@ workbook = client.open_by_key(settings.TRAIN_HW_SHEET)
 
 ppvSheet = workbook.get_worksheet(0)
 
-def submit_hw_to_sheet(start_time, img_id, discord_display_name, completion_time_str, response, self_rate):
+def submit_hw_to_sheet(schedule_date, img_id, discord_display_name, trainee_id, completion_time_str, response, self_rate):
     # Find the first empty row where the first column is empty
     sheet_data = ppvSheet.col_values(1)
     empty_row = len(sheet_data) + 1
@@ -34,12 +34,13 @@ def submit_hw_to_sheet(start_time, img_id, discord_display_name, completion_time
     sheet_img_embed = f"""=HYPERLINK("https://drive.google.com/uc?export=view&id={drive_img_id}", "🔍 {img_id}")"""
     
     row_data = [
-        start_time,              # Column A
+        schedule_date,           # Column A
         sheet_img_embed,         # Column B
         discord_display_name,    # Column C
         completion_time_str,     # Column D
         response,                # Column E
-        self_rate                # Column F
+        self_rate,               # Column F
+        str(trainee_id),              # Column I
     ]
 
     ppvSheet.insert_row([""] * len(row_data), index=empty_row)
@@ -50,6 +51,7 @@ def submit_hw_to_sheet(start_time, img_id, discord_display_name, completion_time
     ppvSheet.update_cell(empty_row, 4, row_data[3])
     ppvSheet.update_cell(empty_row, 5, row_data[4])
     ppvSheet.update_cell(empty_row, 6, row_data[5])
+    ppvSheet.update_cell(empty_row, 9, row_data[6])
     add_grade_dropdown_with_colors(ppvSheet, empty_row)
     
 def add_grade_dropdown_with_colors(sheet, row_index):
