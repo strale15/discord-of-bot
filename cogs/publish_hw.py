@@ -39,7 +39,6 @@ class PublishHwCog(commands.Cog):
         isPpvPresentForDate = True
         if not ppv_rows or len(ppv_rows) == 0:
             isPpvPresentForDate = False
-            #await interaction.followup.send(f"No ppv hw data found for date `{date}`.")
         else:
             ppv_trainee_messages = self.build_ppv_messages_by_trainee(ppv_rows, date)
             
@@ -91,6 +90,7 @@ class PublishHwCog(commands.Cog):
             for submission in trainee_rows:
                 notes = submission.notes.strip() if submission.notes.strip() else "/"
                 response = submission.response.strip() if submission.response.strip() else "/"
+                grade = submission.grade.strip() if submission.grade.strip() else "Not graded"
 
                 result_block = (
                     f"**━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━**\n"
@@ -116,17 +116,40 @@ class PublishHwCog(commands.Cog):
             member_msg = ""
             
             for submission in trainee_rows:
-                notes = submission.notes.strip() if submission.notes.strip() else "/"
+                note1 = submission.note1.strip() if submission.note1.strip() else "/"
+                note2 = submission.note2.strip() if submission.note2.strip() else "/"
+                note3 = submission.note3.strip() if submission.note3.strip() else "/"
+                note4 = submission.note4.strip() if submission.note4.strip() else "/"
+                note5 = submission.note5.strip() if submission.note5.strip() else "/"
+                
+                grade1 = submission.grade1.strip() if submission.grade1.strip() else "Not graded"
+                grade2 = submission.grade2.strip() if submission.grade2.strip() else "Not graded"
+                grade3 = submission.grade3.strip() if submission.grade3.strip() else "Not graded"
+                grade4 = submission.grade4.strip() if submission.grade4.strip() else "Not graded"
+                grade5 = submission.grade5.strip() if submission.grade5.strip() else "Not graded"
 
                 result_block = (
                     f"**━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━**\n"
-                    f"- Grade: `{submission.grade}`\n"
-                    f"Notes:\n```{notes}```\n"
-                    f"MM1:\n```{submission.mm1}```\n"
-                    f"MM2:\n```{submission.mm2}```\n"
-                    f"MM3:\n```{submission.mm3}```\n"
-                    f"MM4:\n```{submission.mm4}```\n"
-                    f"MM5:\n```{submission.mm5}```\n"
+                    
+                    f"- MM1 Grade:\n```{grade1}```\n"
+                    f"MM1 Notes:\n```{note1}```\n"
+                    f"MM1 Submission:\n```{submission.mm1}```\n"
+                    
+                    f"- MM2 Grade:\n```{grade2}```\n"
+                    f"MM2 Notes:\n```{note2}```\n"
+                    f"MM2 Submission:\n```{submission.mm2}```\n"
+                    
+                    f"- MM3 Grade:\n```{grade3}```\n"
+                    f"MM3 Notes:\n```{note3}```\n"
+                    f"MM3 Submission:\n```{submission.mm3}```\n"
+                    
+                    f"- MM4 Grade:\n```{grade4}```\n"
+                    f"MM4 Notes:\n```{note4}```\n"
+                    f"MM4 Submission:\n```{submission.mm4}```\n"
+                    
+                    f"- MM5 Grade:\n```{grade5}```\n"
+                    f"MM5 Notes:\n```{note5}```\n"
+                    f"MM5 Submission:\n```{submission.mm5}```\n"
                 )
 
                 member_msg += result_block

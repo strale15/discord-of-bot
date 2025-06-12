@@ -32,21 +32,47 @@ def submit_hw_to_sheet(date: str, discord_display_name: str, trainee_id, mms: li
         date,
         discord_display_name,
         mms[0],
+        None,
+        None,
         mms[1],
+        None,
+        None,
         mms[2],
+        None,
+        None,
         mms[3],
+        None,
+        None,
         mms[4],
+        None,
+        None,
     ]
 
     mmSheet.insert_row(row_data, index=empty_row)
-    mmSheet.update_cell(empty_row, 10, str(trainee_id))
+    mmSheet.update_cell(empty_row, 18, str(trainee_id))
     add_grade_dropdown_with_colors(mmSheet, empty_row)
+    add_border(mmSheet, empty_row)
+    
+def add_border(sheet, row_index):
+    fmt = CellFormat(
+        borders=Borders(
+            top=Border(style='DASHED', color=Color(0.2, 0.2, 0.2)),
+            bottom=Border(style='DASHED', color=Color(0.2, 0.2, 0.2)),
+            left=Border(style='DASHED', color=Color(0.2, 0.2, 0.2)),
+            right=Border(style='DASHED', color=Color(0.2, 0.2, 0.2)),
+        )
+    )
+    format_cell_range(sheet, f"A{row_index}:Q{row_index}", fmt)
+    
+    fmt = CellFormat(verticalAlignment='TOP')
+    column_letters = ['C', 'F', 'I', 'L', 'O']
+    for letter in column_letters:
+        format_cell_range(sheet, f"{letter}{row_index}", fmt)
     
 def add_grade_dropdown_with_colors(sheet, row_index):
     sheet_id = sheet._properties['sheetId']
     grade_options = [str(i) for i in range(1, 11)]
     
-    # Example: Use a gradient from green (high) to red (low)
     grade_colors = {
         "10": {"red": 0.6, "green": 0.9, "blue": 0.6},
         "9": {"red": 0.7, "green": 0.95, "blue": 0.7},
@@ -60,76 +86,71 @@ def add_grade_dropdown_with_colors(sheet, row_index):
         "1": {"red": 0.9, "green": 0.2, "blue": 0.2},
     }
 
+    # Target columns: D, G, J, M, P -> indices 3, 6, 9, 12, 15
+    target_columns = [3, 6, 9, 12, 15]
     requests = []
 
-    # Add dropdown validation
-    requests.append({
-        "setDataValidation": {
-            "range": {
-                "sheetId": sheet_id,
-                "startRowIndex": row_index - 1,
-                "endRowIndex": row_index,
-                "startColumnIndex": 7,
-                "endColumnIndex": 8
-            },
-            "rule": {
-                "condition": {
-                    "type": "ONE_OF_LIST",
-                    "values": [{"userEnteredValue": grade} for grade in grade_options]
-                },
-                "showCustomUi": True,
-                "strict": True
-            }
-        }
-    })
-
-    # Conditional formatting for each grade
-    for grade, color in grade_colors.items():
+    for col_index in target_columns:
+        # Dropdown data validation
         requests.append({
-            "addConditionalFormatRule": {
-                "rule": {
-                    "ranges": [{
-                        "sheetId": sheet_id,
-                        "startRowIndex": row_index - 1,
-                        "endRowIndex": row_index,
-                        "startColumnIndex": 7,
-                        "endColumnIndex": 8
-                    }],
-                    "booleanRule": {
-                        "condition": {
-                            "type": "TEXT_EQ",
-                            "values": [{"userEnteredValue": grade}]
-                        },
-                        "format": {
-                            "backgroundColor": color
-                        }
-                    }
+            "setDataValidation": {
+                "range": {
+                    "sheetId": sheet_id,
+                    "startRowIndex": row_index - 1,
+                    "endRowIndex": row_index,
+                    "startColumnIndex": col_index,
+                    "endColumnIndex": col_index + 1
                 },
-                "index": 0
+                "rule": {
+                    "condition": {
+                        "type": "ONE_OF_LIST",
+                        "values": [{"userEnteredValue": grade} for grade in grade_options]
+                    },
+                    "showCustomUi": True,
+                    "strict": True
+                }
             }
         })
 
-    # Apply dropdown and conditional format
+        # Conditional formatting for each grade
+        for grade, color in grade_colors.items():
+            requests.append({
+                "addConditionalFormatRule": {
+                    "rule": {
+                        "ranges": [{
+                            "sheetId": sheet_id,
+                            "startRowIndex": row_index - 1,
+                            "endRowIndex": row_index,
+                            "startColumnIndex": col_index,
+                            "endColumnIndex": col_index + 1
+                        }],
+                        "booleanRule": {
+                            "condition": {
+                                "type": "TEXT_EQ",
+                                "values": [{"userEnteredValue": grade}]
+                            },
+                            "format": {
+                                "backgroundColor": color
+                            }
+                        }
+                    },
+                    "index": 0
+                }
+            })
+
+    # Apply dropdowns and formatting
     sheet.spreadsheet.batch_update({"requests": requests})
 
-    # Apply font size and alignment
+    # Optional: Format cells (font size and alignment)
+    from gspread_formatting import CellFormat, TextFormat, format_cell_range
+
     fmt = CellFormat(
         textFormat=TextFormat(fontSize=20),
         horizontalAlignment='CENTER',
         verticalAlignment='MIDDLE'
     )
-    format_cell_range(sheet, f"H{row_index}", fmt)
-    
-    fmt = CellFormat(verticalAlignment='TOP')
-    format_cell_range(sheet, f"C{row_index}:G{row_index}", fmt)
-    
-    # Add dashed border to the whole row (A-G)
-    fmt = CellFormat(
-        borders=Borders(
-            top=Border(style='DASHED', color=Color(0.2, 0.2, 0.2)),
-            bottom=Border(style='DASHED', color=Color(0.2, 0.2, 0.2)),
-            left=Border(style='DASHED', color=Color(0.2, 0.2, 0.2)),
-            right=Border(style='DASHED', color=Color(0.2, 0.2, 0.2)),
-        )
-    )
-    format_cell_range(sheet, f"A{row_index}:I{row_index}", fmt)
+
+    # Apply formatting to each target column letter
+    column_letters = ['D', 'G', 'J', 'M', 'P']
+    for letter in column_letters:
+        format_cell_range(sheet, f"{letter}{row_index}", fmt)

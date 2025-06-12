@@ -26,12 +26,20 @@ class MMHomeworkSubmission:
     date: str
     discord_name: str
     mm1: str
+    grade1: str
+    note1: str
     mm2: str
+    grade2: str
+    note2: str
     mm3: str
+    grade3: str
+    note3: str
     mm4: str
+    grade4: str
+    note4: str
     mm5: str
-    grade: str
-    notes: str
+    grade5: str
+    note5: str
     trainee_id: str
 
 def fetch_rows_by_date(target_date: str) -> List[MMHomeworkSubmission]:
@@ -54,23 +62,39 @@ def fetch_rows_by_date(target_date: str) -> List[MMHomeworkSubmission]:
             row_data = mmSheet.row_values(idx + 1)
 
             # Ensure row has at least 9 fields
-            if len(row_data) < 10:
+            if len(row_data) < 18:
                 continue
 
-            if row_data[7] != "":  # Skip empty grade
-                submission = MMHomeworkSubmission(
-                    date=row_data[0],
-                    discord_name=row_data[1],
-                    mm1=row_data[2],
-                    mm2=row_data[3],
-                    mm3=row_data[4],
-                    mm4=row_data[5],
-                    mm5=row_data[6],
-                    grade=row_data[7],
-                    notes=row_data[8],
-                    trainee_id=row_data[9],
-                )
-                matched_rows.append(submission)
+            if row_data[3] is "" and row_data[6] is "" and row_data[9] is "" and row_data[12] is "" and row_data[15] is "":  # Skip if all empty grades
+                continue
+            
+            submission = MMHomeworkSubmission(
+                date=row_data[0],
+                discord_name=row_data[1],
+                
+                mm1=row_data[2],
+                grade1=row_data[3],
+                note1=row_data[4],
+                
+                mm2=row_data[5],
+                grade2=row_data[6],
+                note2=row_data[7],
+                
+                mm3=row_data[8],
+                grade3=row_data[9],
+                note3=row_data[10],
+                
+                mm4=row_data[11],
+                grade4=row_data[12],
+                note4=row_data[13],
+                
+                mm5=row_data[14],
+                grade5=row_data[15],
+                note5=row_data[16],
+                
+                trainee_id=row_data[17],
+            )
+            matched_rows.append(submission)
 
     return matched_rows
 
